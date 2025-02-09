@@ -19,6 +19,12 @@
             Stops the Web Server. It can be started again
             </summary>
         </member>
+        <member name="M:WebServerLight.RequestSession.StartAsync">
+            <summary>
+            
+            </summary>
+            <returns>True: Keep this SocketSession alive, otherwise dispose it</returns>
+        </member>
         <member name="T:WebServerLight.ServerBuilder">
             <summary>
             Builder pattern for fluently creating the Web Server

@@ -2,15 +2,14 @@
 
 using WebServerLight;
 
-var server = ServerBuilder.New().Build();
+var server =
+    ServerBuilder
+        .New()
+        .Http(8080)
+        .Build();
+    
 server.Start();
-
-
-WriteLine("working...");
 ReadLine();
-
-
-
 server.Stop();
 
 
