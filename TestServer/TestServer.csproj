@@ -11,4 +11,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="./website/index.html">
+      <LogicalName>/index.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="./website/css/styles.css">
+      <LogicalName>/css/styles.css</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

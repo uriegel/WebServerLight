@@ -36,6 +36,13 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:WebServerLight.ServerBuilder.WebsiteFromResource(System.String)">
+            <summary>
+            Host website, the files are included as .NET resource. The files are included in the executing Assembly
+            </summary>
+            <param name="resourceBasePath"></param>
+            <returns></returns>
+        </member>
         <member name="M:WebServerLight.ServerBuilder.Build">
             <summary>
             Aftern configuring the Builder, call this method for creating a Web Server instance.

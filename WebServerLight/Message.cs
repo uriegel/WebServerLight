@@ -1,15 +1,30 @@
-using System.Collections;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text;
 using CsTools.Extensions;
 
+using static System.Console;
+
 namespace WebServerLight;
 
-class Message
+class Message : IRequest
 {
     public Method Method { get; }
     public string Url { get; }
-    public static async Task<Message?> Read(Server server, Stream networkStream, CancellationToken cancellation)
+
+    public ImmutableDictionary<string, string> RequestHeaders { get; }
+
+    public void AddResponseHeader(string key, string value)
+    {
+        ResponseHeaders.Remove(key);
+        ResponseHeaders.Add(key, value);
+    }
+        
+    public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+
+    public static async Task<Message?> Read(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation)
     {
         var buffer = new byte[8192];
         int bytesRead = 0;
@@ -29,14 +44,17 @@ class Message
             if (headerEndIndex >= 0)
             {
                 headerEndIndex += headerText[headerEndIndex] == '\r' ? 4 : 2; // Adjust index for "\r\n\r\n" or "\n\n"
-                return new Message(headerText[..headerEndIndex], buffer, headerEndIndex);
+                return new Message(server, requestSession, networkStream, headerText[..headerEndIndex], buffer, headerEndIndex);
             }
         }
         return null;
     }
 
-    public Message(string headerPart, byte[] buffer, int payloadBegin)
+    public Message(Server server, RequestSession requestSession, Stream networkStream, string headerPart, byte[] buffer, int payloadBegin)
     {
+        this.requestSession = requestSession;
+        this.server = server;
+        this.networkStream = networkStream;
         var parts = headerPart.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         var method = parts[0].SubstringUntil(' ');
         Method = method switch
@@ -48,16 +66,91 @@ class Message
             _ => throw new Exception($"HTTP method {method} not supported")
         };
         Url = parts[0].StringBetween(" ", " ");
-        var affen = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
-        var affe = affen;
-        var länge = affen.GetValueOrDefault("affe");
-         länge = affen.GetValueOrDefault("Content-Length");
-         länge = affen.GetValueOrDefault("content-length");
+        RequestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public async Task<bool> Receive()
+    {
+        try
+        {
+            if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite())
+                return true;
+            else
+                await Send404();
+                return true;
+        }
+        catch (SocketException se)
+        {
+            if (se.SocketErrorCode == SocketError.TimedOut)
+            {
+                Error.WriteLine($"{requestSession.Id} Socket session closed, Timeout has occurred");
+                requestSession.Close(true);
+                return false;
+            }
+            return true;
+        }
+        catch (ConnectionClosedException)
+        {
+            Error.WriteLine($"{requestSession.Id} Socket session closed via exception");
+            requestSession.Close(true);
+            return false;
+        }
+        catch (ObjectDisposedException oe)
+        {
+            Error.WriteLine($"{requestSession.Id} Socket session closed, an error has occurred: {oe}");
+            requestSession.Close(true);
+            return false;
+        }
+        catch (IOException ioe)
+        {
+            Error.WriteLine($"{requestSession.Id} Socket session closed: {ioe}");
+            requestSession.Close(true);
+            return false;
+        }
+        catch (Exception e)
+        {
+            Error.WriteLine($"{requestSession.Id} Socket session closed, an error has occurred while receiving: {e}");
+            requestSession.Close(true);
+            return false;
+        }
+    }
+
+    async Task<bool> CheckResourceWebsite()
+    {
+        var res = Resources.Get(Url);
+        if (res != null)
+        {
+            AddResponseHeader("Content-Length", $"{res.Length}");
+            AddResponseHeader("Content-Type", Url?.GetFileExtension()?.ToMimeType() ?? "text/html");
+            await SendStream(res);
+            return true;
+        }
+        else
+            return false;
+    }
+
+    async Task SendStream(Stream stream)
+    {
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
+        await stream.CopyToAsync(networkStream);
+        await stream.FlushAsync();
+    }
+
+    async Task Send404()
+    {
+        var body = "I can't find what you're looking for...";
+        AddResponseHeader("Content-Length", $"{body.Length}");
+        AddResponseHeader("Content-Type", "text/html");
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
     }
 
     static KeyValuePair<string, string> MakeHeader(string headerLine)
-    {
-        var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return new(parts[0], parts[1]);
-    }
+        {
+            var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return new(parts[0], parts[1]);
+        }
+
+    readonly Server server;
+    readonly Stream networkStream;
+    readonly RequestSession requestSession;
 }

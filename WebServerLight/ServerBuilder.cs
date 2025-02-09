@@ -18,6 +18,13 @@ public class ServerBuilder
     public ServerBuilder Http(int port = 80)
         => this.SideEffect(_ => HttpPort = port.SideEffect(p => WriteLine($"Using HTTP port {p}")));
 
+    /// <summary>
+    /// Host website, the files are included as .NET resource. The files are included in the executing Assembly
+    /// </summary>
+    /// <param name="resourceBasePath"></param>
+    /// <returns></returns>
+    public ServerBuilder WebsiteFromResource(string resourceBasePath)
+        => this.SideEffect(_ => ResourceBasePath = resourceBasePath);
 
     public ServerBuilder KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
@@ -31,5 +38,6 @@ public class ServerBuilder
 
     internal int? HttpPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
+    internal string? ResourceBasePath { get; private set; }
     private ServerBuilder() { }
 } 

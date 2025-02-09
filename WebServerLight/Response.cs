@@ -1,0 +1,5 @@
+namespace WebServerLight;
+
+class ResponseHeaders
+{
+}

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using static System.Console;
 
@@ -5,6 +7,7 @@ namespace WebServerLight;
 
 class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime)
 {
+    public DateTime? StartTime { get; } = startTime ?? DateTime.Now;
     public string Id { get; } = socketSession.Id + "-" + Interlocked.Increment(ref seedId);
 
     /// <summary>
@@ -16,16 +19,16 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         try
         {
             var keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime);
-            var msg = await Message.Read(server, networkStream, keepAliveCancellation.Token);
-            if (msg == null)
+            var msg = await Message.Read(server, this, networkStream, keepAliveCancellation.Token);
+            stopwatch.Start();
+            if (msg != null)
+                return await msg.Receive();
+            else
             {
                 WriteLine(() => $"{Id} Socket session closed");
                 return false;
             }
-            // if (!RequestStartTime.HasValue)
-            //     RequestStartTime = DateTime.Now;
-            //return await ReceiveAsync(read);
-            return false;
+
         }
         catch (OperationCanceledException)
         {
@@ -51,6 +54,13 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             Close(true);
             return false;
         }
+        finally
+        {
+            var elapsed = stopwatch?.Elapsed;
+            stopwatch?.Stop();
+            // TODO WriteLine($"{Id} Answer: {RemoteEndPoint} \"{Headers.Method} {Headers.Url.CutAt('?')} {Headers.Http}\" Status: {responseHeaders.Status} Size: {responseHeaders.ContentLength} Duration: {elapsed}");
+            WriteLine($"{Id} Answer: {socketSession.TcpClient.Client.RemoteEndPoint as IPEndPoint} Duration: {elapsed}");
+        }
     }
 
     public void Close(bool fullClose = false)
@@ -69,6 +79,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     }
 
     static int seedId;
+    readonly Stopwatch stopwatch = new();
 
     bool isClosed;
 }
