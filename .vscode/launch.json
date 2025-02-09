@@ -17,6 +17,20 @@
             "justMyCode": false,
             "enableStepFiltering": true,
             "console": "integratedTerminal"
+        },         {
+            "name": "TestClient",
+            "type": "coreclr",
+            "request": "launch",
+            "requireExactSource": true, 
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/TestClient/bin/Debug/net8.0/TestClient.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/TestClient",
+            "stopAtEntry": false,
+            "justMyCode": false,
+            "enableStepFiltering": true,
+            "console": "integratedTerminal"
         }
+
     ]
 }
