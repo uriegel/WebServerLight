@@ -30,7 +30,7 @@ class Message : IRequest
         int bytesRead = 0;
         int totalBytes = 0;
         var headerBuffer = new MemoryStream(4096);
-        while ((bytesRead = await networkStream.ReadAsync(buffer, 0, buffer.Length, cancellation)) > 0)
+        while ((bytesRead = await networkStream.ReadAsync(buffer, cancellation)) > 0)
         {
             headerBuffer.Write(buffer, 0, bytesRead);
             totalBytes += bytesRead;
@@ -67,6 +67,20 @@ class Message : IRequest
         };
         Url = parts[0].StringBetween(" ", " ");
         RequestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+
+        // var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
+        // if (length.HasValue)
+        //     Fülle();
+
+        // async void Fülle()
+        // {
+        //     using var stream = File.Create("affe.jpg");
+        //     await stream.WriteAsync(buffer, payloadBegin, buffer.Length - payloadBegin);
+        //     var diff = length.Value - buffer.Length + payloadBegin;
+        //     var bytes = new byte[diff];
+        //     var gut = await networkStream.ReadAsync(bytes);
+        //     await stream.WriteAsync(bytes);
+        // }
     }
 
     public async Task<bool> Receive()
@@ -117,11 +131,12 @@ class Message : IRequest
 
     async Task<bool> CheckResourceWebsite()
     {
-        var res = Resources.Get(Url);
+        var url = Url != "/" ? Url : "/index.html";
+        var res = Resources.Get(url);
         if (res != null)
         {
             AddResponseHeader("Content-Length", $"{res.Length}");
-            AddResponseHeader("Content-Type", Url?.GetFileExtension()?.ToMimeType() ?? "text/html");
+            AddResponseHeader("Content-Type", url?.GetFileExtension()?.ToMimeType() ?? "text/html");
             await SendStream(res);
             return true;
         }
