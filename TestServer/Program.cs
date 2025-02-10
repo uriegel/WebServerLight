@@ -1,6 +1,7 @@
 ﻿using static System.Console;
 
 using WebServerLight;
+using System.Diagnostics.Contracts;
 
 var server =
     ServerBuilder
@@ -18,7 +19,15 @@ server.Stop();
 async Task<bool> JsonPost(JsonRequest request)
 {
     var data = await request.DeserializeAsync<Data>();
-    return false;
+    var response = new Response([
+        new Contact("Uwe Riegel", 34),
+        new Contact("Miles Davis", 90),
+        new Contact("John Coltrane", 99)], 123, "Response");
+
+    await request.SendAsync(response);
+    return true;
 } 
 
 record Data(string Text, int Id);
+record Response(IEnumerable<Contact> Contacts, int ID, string Name);
+record Contact(string Name, int Id);

@@ -22,7 +22,6 @@ class Message : IRequest
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-
     public static async Task<Message?> Read(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation)
     {
         var buffer = new byte[8192];
@@ -134,7 +133,6 @@ class Message : IRequest
             return false;
         }
     }
-
     async Task<bool> CheckResourceWebsite()
     {
         var url = Url.SubstringUntil('?');
@@ -169,11 +167,18 @@ class Message : IRequest
                 await ms.WriteAsync(bytes);
             }
             ms.Position = 0;
-            var request = new JsonRequest(url, ms, cancellation);
+            var request = new JsonRequest(url, ms, SendData, cancellation);
             return await server.Configuation.jsonPost(request);
         }
         else
             return false;
+
+        async Task SendData(Stream payload)
+        {
+            AddResponseHeader("Content-Length", $"{payload.Length}");
+            AddResponseHeader("Content-Type", "application/json");
+            await SendStream(payload);
+        }
     }
 
     async Task SendStream(Stream stream)
