@@ -20,7 +20,7 @@ class Message : IRequest
         ResponseHeaders.Remove(key);
         ResponseHeaders.Add(key, value);
     }
-        
+
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
 
@@ -91,7 +91,7 @@ class Message : IRequest
                 return true;
             else
                 await Send404();
-                return true;
+            return true;
         }
         catch (SocketException se)
         {
@@ -131,7 +131,8 @@ class Message : IRequest
 
     async Task<bool> CheckResourceWebsite()
     {
-        var url = Url != "/" ? Url : "/index.html";
+        var url = Url.SubstringUntil('?');
+        url = url != "/" ? url : "/index.html";
         var res = Resources.Get(url);
         if (res != null)
         {
@@ -160,12 +161,20 @@ class Message : IRequest
     }
 
     static KeyValuePair<string, string> MakeHeader(string headerLine)
-        {
-            var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return new(parts[0], parts[1]);
-        }
+    {
+        var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return new(parts[0], parts[1]);
+    }
 
     readonly Server server;
     readonly Stream networkStream;
     readonly RequestSession requestSession;
 }
+
+// TODO CsTools SubStringAfter
+// TODO CsTools SubStringUntil
+// TODO CsTools StringBetween without?
+// TODO WebWindowNetCore res Url without index.html
+// TODO JsonPostRequests
+// TODO ResRequests
+// TODO Commander test
