@@ -158,13 +158,20 @@ class Message : IRequest
         {
             // TODO deserialize from stream!
             var ms = new MemoryStream();
-            await ms.WriteAsync(buffer, payloadBegin, Math.Min(buffer.Length - payloadBegin, (int)length));
+            await ms.WriteAsync(buffer.AsMemory(payloadBegin, Math.Min(buffer.Length - payloadBegin, (int)length)));
             var diff = length.Value - buffer.Length + payloadBegin;
             if (diff > 0)
             {
                 var bytes = new byte[diff];
-                var gut = await networkStream.ReadAsync(bytes);
-                await ms.WriteAsync(bytes);
+                int pos = 0;
+                while (true)
+                {
+                    var read = await networkStream.ReadAsync(bytes.AsMemory(0, bytes.Length - pos));
+                    await ms.WriteAsync(bytes.AsMemory(pos, read));
+                    if (read == diff)
+                        break;
+                    pos = diff;
+                }
             }
             ms.Position = 0;
             var request = new JsonRequest(url, ms, SendData, cancellation);
