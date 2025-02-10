@@ -171,10 +171,6 @@ class Message : IRequest
     readonly RequestSession requestSession;
 }
 
-// TODO CsTools SubStringAfter
-// TODO CsTools SubStringUntil
-// TODO CsTools StringBetween without?
-// TODO WebWindowNetCore res Url without index.html
 // TODO JsonPostRequests
 // TODO ResRequests
 // TODO Commander test
