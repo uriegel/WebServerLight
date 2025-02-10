@@ -26,6 +26,9 @@ public class ServerBuilder
     public ServerBuilder WebsiteFromResource(string resourceBasePath)
         => this.SideEffect(_ => ResourceBasePath = resourceBasePath);
 
+    public ServerBuilder JsonPost(Func<JsonRequest, Task<bool>> request)
+        => this.SideEffect(_ => jsonPost = request);
+
     public ServerBuilder KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
 
@@ -39,5 +42,7 @@ public class ServerBuilder
     internal int? HttpPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal string? ResourceBasePath { get; private set; }
+
+    internal Func<JsonRequest, Task<bool>>? jsonPost;
     private ServerBuilder() { }
 } 

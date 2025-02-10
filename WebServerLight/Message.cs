@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using CsTools.Extensions;
@@ -44,17 +43,20 @@ class Message : IRequest
             if (headerEndIndex >= 0)
             {
                 headerEndIndex += headerText[headerEndIndex] == '\r' ? 4 : 2; // Adjust index for "\r\n\r\n" or "\n\n"
-                return new Message(server, requestSession, networkStream, headerText[..headerEndIndex], buffer, headerEndIndex);
+                return new Message(server, requestSession, networkStream, cancellation, headerText[..headerEndIndex], buffer, headerEndIndex);
             }
         }
         return null;
     }
 
-    public Message(Server server, RequestSession requestSession, Stream networkStream, string headerPart, byte[] buffer, int payloadBegin)
+    public Message(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation, string headerPart, byte[] buffer, int payloadBegin)
     {
         this.requestSession = requestSession;
         this.server = server;
         this.networkStream = networkStream;
+        this.buffer = buffer;
+        this.payloadBegin = payloadBegin;
+        this.cancellation = cancellation;
         var parts = headerPart.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         var method = parts[0].SubstringUntil(' ');
         Method = method switch
@@ -87,7 +89,11 @@ class Message : IRequest
     {
         try
         {
-            if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite())
+            if (Method == Method.Post
+                    && string.Compare(RequestHeaders.GetValue("Content-Type"), "application/json", StringComparison.OrdinalIgnoreCase) == 0
+                    && await CheckPostJsonRequest())
+                return true;
+            else if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite())
                 return true;
             else
                 await Send404();
@@ -145,6 +151,31 @@ class Message : IRequest
             return false;
     }
 
+    async Task<bool> CheckPostJsonRequest()
+    {
+        var url = Url.SubstringUntil('?');
+
+        var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
+        if (length.HasValue && server.Configuation.jsonPost != null)
+        {
+            // TODO deserialize from stream!
+            var ms = new MemoryStream();
+            await ms.WriteAsync(buffer, payloadBegin, Math.Min(buffer.Length - payloadBegin, (int)length));
+            var diff = length.Value - buffer.Length + payloadBegin;
+            if (diff > 0)
+            {
+                var bytes = new byte[diff];
+                var gut = await networkStream.ReadAsync(bytes);
+                await ms.WriteAsync(bytes);
+            }
+            ms.Position = 0;
+            var request = new JsonRequest(url, ms, cancellation);
+            return await server.Configuation.jsonPost(request);
+        }
+        else
+            return false;
+    }
+
     async Task SendStream(Stream stream)
     {
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
@@ -167,8 +198,11 @@ class Message : IRequest
     }
 
     readonly Server server;
-    readonly Stream networkStream;
     readonly RequestSession requestSession;
+    readonly Stream networkStream;
+    readonly byte[] buffer;
+    readonly int payloadBegin;
+    readonly CancellationToken cancellation;
 }
 
 // TODO JsonPostRequests
