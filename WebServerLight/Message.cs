@@ -42,19 +42,20 @@ class Message : IRequest
             if (headerEndIndex >= 0)
             {
                 headerEndIndex += headerText[headerEndIndex] == '\r' ? 4 : 2; // Adjust index for "\r\n\r\n" or "\n\n"
-                return new Message(server, requestSession, networkStream, cancellation, headerText[..headerEndIndex], buffer, headerEndIndex);
+                return new Message(server, requestSession, networkStream, cancellation, headerText[..headerEndIndex], buffer, headerEndIndex, totalBytes);
             }
         }
         return null;
     }
 
-    public Message(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation, string headerPart, byte[] buffer, int payloadBegin)
+    public Message(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation, string headerPart, byte[] buffer, int payloadBegin, int bytesRead)
     {
         this.requestSession = requestSession;
         this.server = server;
         this.networkStream = networkStream;
         this.buffer = buffer;
         this.payloadBegin = payloadBegin;
+        this.bytesRead = bytesRead;
         this.cancellation = cancellation;
         var parts = headerPart.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         var method = parts[0].SubstringUntil(' ');
@@ -158,8 +159,8 @@ class Message : IRequest
         {
             // TODO deserialize from stream!
             var ms = new MemoryStream();
-            await ms.WriteAsync(buffer.AsMemory(payloadBegin, Math.Min(buffer.Length - payloadBegin, (int)length)));
-            var diff = length.Value - buffer.Length + payloadBegin;
+            await ms.WriteAsync(buffer.AsMemory(payloadBegin, Math.Min(buffer.Length - payloadBegin - bytesRead, (int)length)));
+            var diff = length.Value - buffer.Length + payloadBegin + bytesRead;
             if (diff > 0)
             {
                 var bytes = new byte[diff];
@@ -170,7 +171,7 @@ class Message : IRequest
                     await ms.WriteAsync(bytes.AsMemory(pos, read));
                     if (read == diff)
                         break;
-                    pos = diff;
+                    pos += read;
                 }
             }
             ms.Position = 0;
@@ -214,6 +215,7 @@ class Message : IRequest
     readonly Stream networkStream;
     readonly byte[] buffer;
     readonly int payloadBegin;
+    readonly int bytesRead;
     readonly CancellationToken cancellation;
 }
 
