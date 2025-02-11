@@ -171,7 +171,6 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
     }
 }
 
-// TODO Receive to RequestSession
-// TODO StreamBase to CsTools
-// TODO PayloadStream with cmd2: array of strings, 20000, read rest from networkStream
+// TODO preflight and Cors cache
+// TODO Synchronization context in Gtk4DotNet
 // TODO ResRequests
