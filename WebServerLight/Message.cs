@@ -120,6 +120,7 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
         var res = Resources.Get(url);
         if (res != null)
         {
+            AddResponseHeader("Connection", "Keep-Alive");
             AddResponseHeader("Content-Length", $"{res.Length}");
             AddResponseHeader("Content-Type", url?.GetFileExtension()?.ToMimeType() ?? "text/html");
             await SendStream(res);
@@ -143,6 +144,7 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
 
         async Task SendData(Stream payload)
         {
+            AddResponseHeader("Connection", "Keep-Alive");
             AddResponseHeader("Content-Length", $"{payload.Length}");
             AddResponseHeader("Content-Type", "application/json");
             await SendStream(payload);
@@ -159,6 +161,7 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
     async Task Send404()
     {
         var body = "I can't find what you're looking for...";
+        AddResponseHeader("Connection", "Keep-Alive");
         AddResponseHeader("Content-Length", $"{body.Length}");
         AddResponseHeader("Content-Type", "text/html");
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
@@ -171,6 +174,6 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
     }
 }
 
+// TODO Synchronization context in Gtk4DotNet: Gtk4DotNet WebView with disabled synchsonisation context
 // TODO preflight and Cors cache
-// TODO Synchronization context in Gtk4DotNet
 // TODO ResRequests

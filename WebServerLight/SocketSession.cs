@@ -51,12 +51,12 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
         }
         catch (Exception e) when (e is ObjectDisposedException)
         {
-            Error.WriteLine($"{Id}- Object disposed");
+            Error.WriteLine($"{Id} Object disposed");
             Close();
         }
         catch (Exception e)
         {
-            Error.WriteLine($"{Id}- An error has occurred while reading socket, error: {e}");
+            Error.WriteLine($"{Id} An error has occurred while reading socket, error: {e}");
         }
     }
 

@@ -8,7 +8,11 @@ namespace WebServerLight;
 class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime)
 {
     public DateTime? StartTime { get; } = startTime ?? DateTime.Now;
-    public string Id { get; } = socketSession.Id + "-" + Interlocked.Increment(ref seedId);
+    public string Id
+    {
+        get => _ID ??= _ID = socketSession.Id + "-" + Interlocked.Increment(ref seedId);
+    }
+    string? _ID;
 
     /// <summary>
     /// 
@@ -22,13 +26,15 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             var msg = await Message.Read(server, this, networkStream, keepAliveCancellation.Token);
             stopwatch.Start();
             if (msg != null)
+            {
+                WriteLine($"{Id} {msg.Method} {msg.Url}");
                 return await msg.Receive();
+            }
             else
             {
-                WriteLine(() => $"{Id} Socket session closed");
+                WriteLine($"{Id} Socket session closed");
                 return false;
             }
-
         }
         catch (OperationCanceledException)
         {
