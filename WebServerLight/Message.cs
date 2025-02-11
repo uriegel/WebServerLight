@@ -7,12 +7,14 @@ using static System.Console;
 
 namespace WebServerLight;
 
-class Message : IRequest
+class Message(Server server, RequestSession requestSession, Stream networkStream, Method method, string url, 
+    ImmutableDictionary<string, string> requestHeaders, Memory<byte> payloadBegin, CancellationToken cancellation) 
+    : IRequest
 {
-    public Method Method { get; }
-    public string Url { get; }
+    public Method Method { get => method; }
+    public string Url { get => url; }
 
-    public ImmutableDictionary<string, string> RequestHeaders { get; }
+    public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
 
     public void AddResponseHeader(string key, string value)
     {
@@ -41,50 +43,27 @@ class Message : IRequest
                 headerEndIndex = headerText.IndexOf("\n\n", StringComparison.Ordinal);
             if (headerEndIndex >= 0)
             {
+                var headerPart = headerText[..headerEndIndex];
                 headerEndIndex += headerText[headerEndIndex] == '\r' ? 4 : 2; // Adjust index for "\r\n\r\n" or "\n\n"
-                return new Message(server, requestSession, networkStream, cancellation, headerText[..headerEndIndex], buffer, headerEndIndex, totalBytes);
+                var parts = headerPart.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+                var method = parts[0].SubstringUntil(' ') switch
+                {
+                    "GET" => Method.Get,
+                    "POST" => Method.Post,
+                    "PUT" => Method.Put,
+                    "Delete" => Method.Delete,
+                    var m => throw new Exception($"HTTP method {m} not supported")
+                };
+                var url = parts[0].StringBetween(" ", " ");
+                var requestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+
+                return new Message(server, requestSession, networkStream, method, url, requestHeaders, 
+                    new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex), cancellation);
             }
         }
         return null;
     }
-
-    public Message(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation, string headerPart, byte[] buffer, int payloadBegin, int bytesRead)
-    {
-        this.requestSession = requestSession;
-        this.server = server;
-        this.networkStream = networkStream;
-        this.buffer = buffer;
-        this.payloadBegin = payloadBegin;
-        this.bytesRead = bytesRead;
-        this.cancellation = cancellation;
-        var parts = headerPart.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        var method = parts[0].SubstringUntil(' ');
-        Method = method switch
-        {
-            "GET" => Method.Get,
-            "POST" => Method.Post,
-            "PUT" => Method.Put,
-            "Delete" => Method.Delete,
-            _ => throw new Exception($"HTTP method {method} not supported")
-        };
-        Url = parts[0].StringBetween(" ", " ");
-        RequestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
-
-        // var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        // if (length.HasValue)
-        //     Fülle();
-
-        // async void Fülle()
-        // {
-        //     using var stream = File.Create("affe.jpg");
-        //     await stream.WriteAsync(buffer, payloadBegin, buffer.Length - payloadBegin);
-        //     var diff = length.Value - buffer.Length + payloadBegin;
-        //     var bytes = new byte[diff];
-        //     var gut = await networkStream.ReadAsync(bytes);
-        //     await stream.WriteAsync(bytes);
-        // }
-    }
-
+    
     public async Task<bool> Receive()
     {
         try
@@ -153,29 +132,10 @@ class Message : IRequest
     async Task<bool> CheckPostJsonRequest()
     {
         var url = Url.SubstringUntil('?');
-
         var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
         if (length.HasValue && server.Configuation.jsonPost != null)
         {
-            // TODO deserialize from stream!
-            var ms = new MemoryStream();
-            await ms.WriteAsync(buffer.AsMemory(payloadBegin, Math.Min(buffer.Length - payloadBegin - bytesRead, (int)length)));
-            var diff = length.Value - buffer.Length + payloadBegin + bytesRead;
-            if (diff > 0)
-            {
-                var bytes = new byte[diff];
-                int pos = 0;
-                while (true)
-                {
-                    var read = await networkStream.ReadAsync(bytes.AsMemory(0, bytes.Length - pos));
-                    await ms.WriteAsync(bytes.AsMemory(pos, read));
-                    if (read == diff)
-                        break;
-                    pos += read;
-                }
-            }
-            ms.Position = 0;
-            var request = new JsonRequest(url, ms, SendData, cancellation);
+            var request = new JsonRequest(url, new PayloadStream(payloadBegin, networkStream, length.Value), SendData, cancellation);
             return await server.Configuation.jsonPost(request);
         }
         else
@@ -209,16 +169,9 @@ class Message : IRequest
         var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return new(parts[0], parts[1]);
     }
-
-    readonly Server server;
-    readonly RequestSession requestSession;
-    readonly Stream networkStream;
-    readonly byte[] buffer;
-    readonly int payloadBegin;
-    readonly int bytesRead;
-    readonly CancellationToken cancellation;
 }
 
-// TODO JsonPostRequests
+// TODO Receive to RequestSession
+// TODO StreamBase to CsTools
+// TODO PayloadStream with cmd2: array of strings, 20000, read rest from networkStream
 // TODO ResRequests
-// TODO Commander test

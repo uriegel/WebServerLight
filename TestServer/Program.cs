@@ -1,7 +1,8 @@
 ﻿using static System.Console;
 
 using WebServerLight;
-using System.Diagnostics.Contracts;
+
+WriteLine(@"Test site:  http://localhost:8080");
 
 var server =
     ServerBuilder
