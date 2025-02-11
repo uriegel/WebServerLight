@@ -29,6 +29,6 @@ async Task<bool> JsonPost(JsonRequest request)
     return true;
 } 
 
-record Data(string Text, int Id);
+record Data(string Text, int Id, IEnumerable<string> LongArray);
 record Response(IEnumerable<Contact> Contacts, int ID, string Name);
 record Contact(string Name, int Id);
