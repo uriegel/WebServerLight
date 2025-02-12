@@ -62,8 +62,10 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
         return null;
     }
 
-    public async Task SendStream(Stream stream)
+    public async Task SendStream(Stream stream, string contentType, int length)
     {
+        AddResponseHeader("Content-Length", $"{length}");
+        AddResponseHeader("Content-Type", contentType);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
         await stream.CopyToAsync(networkStream);
         await stream.FlushAsync();
@@ -73,7 +75,7 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
     {
         var body = "I can't find what you're looking for...";
         AddResponseHeader("Content-Length", $"{body.Length}");
-        AddResponseHeader("Content-Type", "text/html");
+        AddResponseHeader("Content-Type", MimeTypes.TextPlain);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
     }
 

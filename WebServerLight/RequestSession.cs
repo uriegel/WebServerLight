@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using CsTools.Extensions;
 
 using static System.Console;
@@ -91,7 +90,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         try
         {
             if (msg.Method == Method.Post
-                    && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), "application/json", StringComparison.OrdinalIgnoreCase) == 0
+                    && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
                     && await CheckPostJsonRequest(msg))
                 return true;
             else if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite(msg))
@@ -142,9 +141,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         var res = Resources.Get(url);
         if (res != null)
         {
-            msg.AddResponseHeader("Content-Length", $"{res.Length}");
-            msg.AddResponseHeader("Content-Type", url?.GetFileExtension()?.ToMimeType() ?? "text/html");
-            await msg.SendStream(res);
+            await msg.SendStream(res, url?.GetFileExtension()?.ToMimeType() ?? MimeTypes.TextHtml, (int)res.Length);
             return true;
         }
         else
@@ -157,18 +154,11 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
         if (length.HasValue && server.Configuation.jsonPost != null && msg.Payload != null)
         {
-            var request = new JsonRequest(url, msg.Payload, SendData, keepAliveCancellation);
+            var request = new JsonRequest(url, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length), keepAliveCancellation);
             return await server.Configuation.jsonPost(request);
         }
         else
             return false;
-
-        async Task SendData(Stream payload)
-        {
-            msg.AddResponseHeader("Content-Length", $"{payload.Length}");
-            msg.AddResponseHeader("Content-Type", "application/json");
-            await msg.SendStream(payload);
-        }
     }
 
     static int seedId;
