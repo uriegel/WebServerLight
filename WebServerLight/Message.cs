@@ -1,18 +1,17 @@
 using System.Collections.Immutable;
-using System.Net.Sockets;
 using System.Text;
 using CsTools.Extensions;
 
-using static System.Console;
-
 namespace WebServerLight;
 
-class Message(Server server, RequestSession requestSession, Stream networkStream, Method method, string url, 
-    ImmutableDictionary<string, string> requestHeaders, Memory<byte> payloadBegin, CancellationToken cancellation) 
+class Message(Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin) 
     : IRequest
 {
     public Method Method { get => method; }
     public string Url { get => url; }
+
+    public Stream? Payload {  get => _Payload ??= GetPayload(); }
+    Stream? _Payload;
 
     public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
 
@@ -24,7 +23,7 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public static async Task<Message?> Read(Server server, RequestSession requestSession, Stream networkStream, CancellationToken cancellation)
+    public static async Task<Message?> Read(Stream networkStream, CancellationToken cancellation)
     {
         var buffer = new byte[8192];
         int bytesRead = 0;
@@ -57,114 +56,19 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
                 var url = parts[0].StringBetween(" ", " ");
                 var requestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
 
-                return new Message(server, requestSession, networkStream, method, url, requestHeaders, 
-                    new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex), cancellation);
+                return new Message(method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex));
             }
         }
         return null;
     }
-    
-    public async Task<bool> Receive()
-    {
-        try
-        {
-            if (Method == Method.Post
-                    && string.Compare(RequestHeaders.GetValue("Content-Type"), "application/json", StringComparison.OrdinalIgnoreCase) == 0
-                    && await CheckPostJsonRequest())
-                return true;
-            else if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite())
-                return true;
-            else
-                await Send404();
-            return true;
-        }
-        catch (SocketException se)
-        {
-            if (se.SocketErrorCode == SocketError.TimedOut)
-            {
-                Error.WriteLine($"{requestSession.Id} Socket session closed, Timeout has occurred");
-                requestSession.Close(true);
-                return false;
-            }
-            return true;
-        }
-        catch (ConnectionClosedException)
-        {
-            Error.WriteLine($"{requestSession.Id} Socket session closed via exception");
-            requestSession.Close(true);
-            return false;
-        }
-        catch (ObjectDisposedException oe)
-        {
-            Error.WriteLine($"{requestSession.Id} Socket session closed, an error has occurred: {oe}");
-            requestSession.Close(true);
-            return false;
-        }
-        catch (IOException ioe)
-        {
-            Error.WriteLine($"{requestSession.Id} Socket session closed: {ioe}");
-            requestSession.Close(true);
-            return false;
-        }
-        catch (Exception e)
-        {
-            Error.WriteLine($"{requestSession.Id} Socket session closed, an error has occurred while receiving: {e}");
-            requestSession.Close(true);
-            return false;
-        }
-    }
-    async Task<bool> CheckResourceWebsite()
-    {
-        var url = Url.SubstringUntil('?');
-        url = url != "/" ? url : "/index.html";
-        var res = Resources.Get(url);
-        if (res != null)
-        {
-            AddResponseHeader("Connection", "Keep-Alive");
-            AddResponseHeader("Content-Length", $"{res.Length}");
-            AddResponseHeader("Content-Type", url?.GetFileExtension()?.ToMimeType() ?? "text/html");
-            await SendStream(res);
-            return true;
-        }
-        else
-            return false;
-    }
 
-    async Task<bool> CheckPostJsonRequest()
+    Stream? GetPayload() 
     {
-        var url = Url.SubstringUntil('?');
         var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue && server.Configuation.jsonPost != null)
-        {
-            var request = new JsonRequest(url, new PayloadStream(payloadBegin, networkStream, length.Value), SendData, cancellation);
-            return await server.Configuation.jsonPost(request);
-        }
+        if (length.HasValue)
+            return new PayloadStream(payloadBegin, networkStream, length.Value);  
         else
-            return false;
-
-        async Task SendData(Stream payload)
-        {
-            AddResponseHeader("Connection", "Keep-Alive");
-            AddResponseHeader("Content-Length", $"{payload.Length}");
-            AddResponseHeader("Content-Type", "application/json");
-            await SendStream(payload);
-        }
-    }
-
-    async Task SendStream(Stream stream)
-    {
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
-        await stream.CopyToAsync(networkStream);
-        await stream.FlushAsync();
-    }
-
-    async Task Send404()
-    {
-        var body = "I can't find what you're looking for...";
-        AddResponseHeader("Connection", "Keep-Alive");
-        AddResponseHeader("Content-Length", $"{body.Length}");
-        AddResponseHeader("Content-Type", "text/html");
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
+            return null;
     }
 
     static KeyValuePair<string, string> MakeHeader(string headerLine)
@@ -174,6 +78,5 @@ class Message(Server server, RequestSession requestSession, Stream networkStream
     }
 }
 
-// TODO Synchronization context in Gtk4DotNet: Gtk4DotNet WebView with disabled synchsonisation context
 // TODO preflight and Cors cache
 // TODO ResRequests
