@@ -24,7 +24,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
-            var msg = await Message.Read(networkStream, keepAliveCancellation);
+            var msg = await Message.Read(server, networkStream, keepAliveCancellation);
             stopwatch.Start();
             if (msg != null)
             {
@@ -89,14 +89,16 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
-            if (msg.Method == Method.Post
-                    && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
-                    && await CheckPostJsonRequest(msg))
+            if (msg.Method == Method.Options && await ServeOptions(msg))
                 return true;
-            else if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite(msg))
-                return true;
-            else
-                await msg.Send404();
+            else if (msg.Method == Method.Post
+                        && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
+                        && await CheckPostJsonRequest(msg))
+                    return true;
+                else if (server.Configuration.ResourceBasePath != null && await CheckResourceWebsite(msg))
+                    return true;
+                else
+                    await msg.Send404();
             return true;
         }
         catch (SocketException se)
@@ -152,13 +154,28 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         var url = msg.Url.SubstringUntil('?');
         var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue && server.Configuation.jsonPost != null && msg.Payload != null)
+        if (length.HasValue && server.Configuration.jsonPost != null && msg.Payload != null)
         {
             var request = new JsonRequest(url, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length), keepAliveCancellation);
-            return await server.Configuation.jsonPost(request);
+            return await server.Configuration.jsonPost(request);
         }
         else
             return false;
+    }
+
+    async Task<bool> ServeOptions(Message msg)
+    {
+        var request = msg.RequestHeaders.GetValue("Access-Control-Request-Headers");
+        if (request != null)
+            msg.AddResponseHeader("Access-Control-Allow-Headers", request);
+        request = msg.RequestHeaders.GetValue("Access-Control-Request-Method");
+        if (request != null)
+            msg.AddResponseHeader("Access-Control-Allow-Methods", "*");
+        if (server.Configuration.AccessControlMaxAgeStr != null)
+        msg.AddResponseHeader("Access-Control-Max-Age", server.Configuration.AccessControlMaxAgeStr);
+        await msg.SendOnlyHeaders();
+
+        return true;
     }
 
     static int seedId;

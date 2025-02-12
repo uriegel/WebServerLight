@@ -4,7 +4,7 @@ using CsTools.Extensions;
 
 namespace WebServerLight;
 
-class Message(Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin) 
+class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin) 
     : IRequest
 {
     public Method Method { get => method; }
@@ -23,7 +23,7 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public static async Task<Message?> Read(Stream networkStream, CancellationToken cancellation)
+    public static async Task<Message?> Read(Server server, Stream networkStream, CancellationToken cancellation)
     {
         var buffer = new byte[8192];
         int bytesRead = 0;
@@ -50,13 +50,14 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
                     "GET" => Method.Get,
                     "POST" => Method.Post,
                     "PUT" => Method.Put,
-                    "Delete" => Method.Delete,
+                    "DELETE" => Method.Delete,
+                    "OPTIONS" => Method.Options,
                     var m => throw new Exception($"HTTP method {m} not supported")
                 };
                 var url = parts[0].StringBetween(" ", " ");
                 var requestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
 
-                return new Message(method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex));
+                return new Message(server, method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex));
             }
         }
         return null;
@@ -66,6 +67,7 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
     {
         AddResponseHeader("Content-Length", $"{length}");
         AddResponseHeader("Content-Type", contentType);
+        InitResponseHeaders(true);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
         await stream.CopyToAsync(networkStream);
         await stream.FlushAsync();
@@ -74,9 +76,16 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
     public async Task Send404()
     {
         var body = "I can't find what you're looking for...";
+        InitResponseHeaders(true);
         AddResponseHeader("Content-Length", $"{body.Length}");
         AddResponseHeader("Content-Type", MimeTypes.TextPlain);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
+    }
+
+    public async Task SendOnlyHeaders()
+    {
+        InitResponseHeaders(false);
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
     }
 
     PayloadStream? GetPayload() 
@@ -88,12 +97,39 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
             return null;
     }
 
-    static KeyValuePair<string, string> MakeHeader(string headerLine)
+    void InitResponseHeaders(bool payload)
     {
-        var parts = headerLine.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return new(parts[0], parts[1]);
+        if (!ResponseHeaders.ContainsKey("Content-Length") && payload)
+            AddResponseHeader("Connection", "close");
+        AddResponseHeader("Date", DateTime.Now.ToUniversalTime().ToString("R"));
+        AddResponseHeader("Server", "URiegel WebServerLight");
+
+        // if (server.Configuration.XFrameOptions != XFrameOptions.NotSet)
+        //     headers["X-Frame-Options"] = server.Configuration.XFrameOptions.ToString();
+        // if (server.Configuration.HstsDurationInSeconds > 0)
+        //     headers["Strict-Transport-Security"] = $"max-age={server.Configuration.HstsDurationInSeconds}";
+
+        if (server.Configuration.AllowedOrigins.Count > 0)
+        {
+            var origin = requestHeaders.GetValue("origin");
+            if (!string.IsNullOrEmpty(origin))
+            {
+                var host = requestHeaders.GetValue("host");
+                if (string.Compare(origin, host, true) != 0)
+                {
+                    var originToAllow = server.Configuration.AllowedOrigins.FirstOrDefault(n => string.Compare(n, origin, true) == 0);
+                    if (originToAllow != null)
+                        AddResponseHeader("Access-Control-Allow-Origin", originToAllow);            
+                }
+            }
+        }
     }
+
+    static KeyValuePair<string, string> MakeHeader(string headerLine)
+        => new(
+            headerLine.SubstringUntil(':'),
+            headerLine.SubstringAfter(':').Trim()
+        );
 }
 
-// TODO preflight and Cors cache
 // TODO ResRequests

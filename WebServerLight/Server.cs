@@ -9,7 +9,7 @@ class Server(ServerBuilder server) : IServer
 {
     public bool IsStarted { get; private set; }
 
-    public ServerBuilder Configuation { get => server; }
+    public ServerBuilder Configuration { get => server; }
 
     public int SocketLifetime { get => server.SocketLifetime; }
 

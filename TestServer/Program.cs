@@ -10,6 +10,8 @@ var server =
         .Http(8080)
         .WebsiteFromResource("")
         .JsonPost(JsonPost)
+        .AddAllowedOrigin("http://localhost:8080")
+        .AccessControlMaxAge(TimeSpan.FromMinutes(1))
         .Build();
     
 server.Start();

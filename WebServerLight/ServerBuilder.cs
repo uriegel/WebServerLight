@@ -32,6 +32,12 @@ public class ServerBuilder
     public ServerBuilder KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
 
+    public ServerBuilder AddAllowedOrigin(string origin)
+        => this.SideEffect(_ => allowedOrigins.Add(origin));
+
+    public ServerBuilder AccessControlMaxAge(TimeSpan maxAge)
+        => this.SideEffect(_ => AccessControlMaxAgeStr = $"{(int)maxAge.TotalSeconds}");
+
     /// <summary>
     /// Aftern configuring the Builder, call this method for creating a Web Server instance.
     /// </summary>
@@ -39,10 +45,14 @@ public class ServerBuilder
     public IServer Build()
         => new Server(this);
 
+    internal IReadOnlyList<string> AllowedOrigins { get => allowedOrigins; }    
     internal int? HttpPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal string? ResourceBasePath { get; private set; }
-
     internal Func<JsonRequest, Task<bool>>? jsonPost;
-    private ServerBuilder() { }
+    internal string? AccessControlMaxAgeStr { get; private set; }
+
+    ServerBuilder() { }
+
+    readonly List<string> allowedOrigins = [];
 } 

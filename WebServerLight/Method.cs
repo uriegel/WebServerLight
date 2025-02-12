@@ -5,5 +5,6 @@ public enum Method
     Get,
     Post,
     Put,
-    Delete
+    Delete,
+    Options
 }
