@@ -1,6 +1,7 @@
 ﻿using static System.Console;
 
 using WebServerLight;
+using CsTools.Extensions;
 
 WriteLine(@"Test site:  http://localhost:8080");
 
@@ -9,6 +10,7 @@ var server =
         .New()
         .Http(8080)
         .WebsiteFromResource()
+        .Get(Get)
         .JsonPost(JsonPost)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))
@@ -18,6 +20,22 @@ server.Start();
 ReadLine();
 server.Stop();
 
+async Task<bool> Get(GetRequest request)
+{
+    if (request.Url == "/image")
+    {
+        var res = Resources.Get("image");
+        if (res != null)
+        {
+            await request.SendAsync(res, (int)res.Length, MimeTypes.ImageJpeg);
+            return true;
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+}
 
 async Task<bool> JsonPost(JsonRequest request)
 {

@@ -154,7 +154,13 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
 
     async Task<bool> ServeGet(Message msg)
     {
-        return false;
+        if (server.Configuration.getRequest != null)
+        {
+            var request = new GetRequest(msg.Url, async (stream, length, type) => await msg.SendStream(stream, type, length));
+            return await server.Configuration.getRequest(request);
+        }
+        else
+            return false;
     }
 
     async Task<bool> CheckPostJsonRequest(Message msg)

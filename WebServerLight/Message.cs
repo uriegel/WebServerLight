@@ -5,7 +5,6 @@ using CsTools.Extensions;
 namespace WebServerLight;
 
 class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin) 
-    : IRequest
 {
     public Method Method { get => method; }
     public string Url { get => url; }
@@ -132,4 +131,3 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         );
 }
 
-// TODO ResRequests

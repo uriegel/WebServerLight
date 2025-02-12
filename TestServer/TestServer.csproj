@@ -21,6 +21,9 @@
     <EmbeddedResource Include="./website/scripts/script.js">
       <LogicalName>/scripts/script.js</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="./website/images/image.jpg">
+      <LogicalName>image</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
