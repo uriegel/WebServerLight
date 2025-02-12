@@ -92,13 +92,15 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             if (msg.Method == Method.Options && await ServeOptions(msg))
                 return true;
             else if (msg.Method == Method.Post
-                        && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
-                        && await CheckPostJsonRequest(msg))
-                    return true;
-                else if (server.Configuration.ResourceBasePath != null && await CheckResourceWebsite(msg))
-                    return true;
-                else
-                    await msg.Send404();
+                    && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
+                    && await CheckPostJsonRequest(msg))
+                return true;
+            else if (msg.Method == Method.Get && await ServeGet(msg))
+                return true;
+            else if (server.Configuration.IsWebsiteFromResource && await CheckResourceWebsite(msg))
+                return true;
+            else
+                await msg.Send404();
             return true;
         }
         catch (SocketException se)
@@ -148,6 +150,11 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         }
         else
             return false;
+    }
+
+    async Task<bool> ServeGet(Message msg)
+    {
+        return false;
     }
 
     async Task<bool> CheckPostJsonRequest(Message msg)

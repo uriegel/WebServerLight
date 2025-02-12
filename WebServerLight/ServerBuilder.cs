@@ -21,10 +21,9 @@ public class ServerBuilder
     /// <summary>
     /// Host website, the files are included as .NET resource. The files are included in the executing Assembly
     /// </summary>
-    /// <param name="resourceBasePath"></param>
     /// <returns></returns>
-    public ServerBuilder WebsiteFromResource(string resourceBasePath)
-        => this.SideEffect(_ => ResourceBasePath = resourceBasePath);
+    public ServerBuilder WebsiteFromResource()
+        => this.SideEffect(_ => IsWebsiteFromResource = true);
 
     public ServerBuilder JsonPost(Func<JsonRequest, Task<bool>> request)
         => this.SideEffect(_ => jsonPost = request);
@@ -48,7 +47,7 @@ public class ServerBuilder
     internal IReadOnlyList<string> AllowedOrigins { get => allowedOrigins; }    
     internal int? HttpPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
-    internal string? ResourceBasePath { get; private set; }
+    internal bool IsWebsiteFromResource { get; private set; }
     internal Func<JsonRequest, Task<bool>>? jsonPost;
     internal string? AccessControlMaxAgeStr { get; private set; }
 

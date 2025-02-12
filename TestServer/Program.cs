@@ -8,7 +8,7 @@ var server =
     ServerBuilder
         .New()
         .Http(8080)
-        .WebsiteFromResource("")
+        .WebsiteFromResource()
         .JsonPost(JsonPost)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))
@@ -21,13 +21,24 @@ server.Stop();
 
 async Task<bool> JsonPost(JsonRequest request)
 {
-    var data = await request.DeserializeAsync<Data>();
-    var response = new Response([
-        new Contact("Uwe Riegel", 34),
-        new Contact("Miles Davis", 90),
-        new Contact("John Coltrane", 99)], 123, "Response");
+    if (request.Url == "/json/cmd4")
+    {
+        var response = new Response([
+            new Contact("Uwe Riegel", 34),
+            new Contact("Miles Davis", 90),
+            new Contact("John Coltrane", 99)], 123, "Response without input");
+        await request.SendAsync(response);
+    }
+    else
+    {
+        var data = await request.DeserializeAsync<Data>();
+        var response = new Response([
+            new Contact("Uwe Riegel", 34),
+            new Contact("Miles Davis", 90),
+            new Contact("John Coltrane", 99)], 123, request.Url);
 
-    await request.SendAsync(response);
+        await request.SendAsync(response);
+    }
     return true;
 } 
 
