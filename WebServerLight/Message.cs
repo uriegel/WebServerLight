@@ -81,10 +81,10 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
     }
 
-    public async Task SendOnlyHeaders()
+    public async Task SendOnlyHeaders(bool code204 = true)
     {
         InitResponseHeaders(false);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 {(code204 ? "204 No Content" : "200 OK")}\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
     }
 
     PayloadStream? GetPayload() 
