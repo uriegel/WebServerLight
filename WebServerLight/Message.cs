@@ -10,8 +10,8 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
     public Method Method { get => method; }
     public string Url { get => url; }
 
-    public Stream? Payload {  get => _Payload ??= GetPayload(); }
-    Stream? _Payload;
+    public PayloadStream? Payload {  get => _Payload ??= GetPayload(); }
+    PayloadStream? _Payload;
 
     public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
 
@@ -62,7 +62,22 @@ class Message(Method method, string url, ImmutableDictionary<string, string> req
         return null;
     }
 
-    Stream? GetPayload() 
+    public async Task SendStream(Stream stream)
+    {
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
+        await stream.CopyToAsync(networkStream);
+        await stream.FlushAsync();
+    }
+
+    public async Task Send404()
+    {
+        var body = "I can't find what you're looking for...";
+        AddResponseHeader("Content-Length", $"{body.Length}");
+        AddResponseHeader("Content-Type", "text/html");
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
+    }
+
+    PayloadStream? GetPayload() 
     {
         var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
         if (length.HasValue)

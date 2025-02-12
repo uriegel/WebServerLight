@@ -97,7 +97,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             else if (server.Configuation.ResourceBasePath != null && await CheckResourceWebsite(msg))
                 return true;
             else
-                await Send404(msg);
+                await msg.Send404();
             return true;
         }
         catch (SocketException se)
@@ -142,10 +142,9 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         var res = Resources.Get(url);
         if (res != null)
         {
-            msg.AddResponseHeader("Connection", "Keep-Alive");
             msg.AddResponseHeader("Content-Length", $"{res.Length}");
             msg.AddResponseHeader("Content-Type", url?.GetFileExtension()?.ToMimeType() ?? "text/html");
-            await SendStream(msg, res);
+            await msg.SendStream(res);
             return true;
         }
         else
@@ -156,7 +155,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         var url = msg.Url.SubstringUntil('?');
         var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue && server.Configuation.jsonPost != null)
+        if (length.HasValue && server.Configuation.jsonPost != null && msg.Payload != null)
         {
             var request = new JsonRequest(url, msg.Payload, SendData, keepAliveCancellation);
             return await server.Configuation.jsonPost(request);
@@ -166,27 +165,10 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
 
         async Task SendData(Stream payload)
         {
-            msg.AddResponseHeader("Connection", "Keep-Alive");
             msg.AddResponseHeader("Content-Length", $"{payload.Length}");
             msg.AddResponseHeader("Content-Type", "application/json");
-            await SendStream(msg, payload);
+            await msg.SendStream(payload);
         }
-    }
-
-    async Task SendStream(Message msg, Stream stream)
-    {
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", msg.ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
-        await stream.CopyToAsync(networkStream);
-        await stream.FlushAsync();
-    }
-
-    async Task Send404(Message msg)
-    {
-        var body = "I can't find what you're looking for...";
-        msg.AddResponseHeader("Connection", "Keep-Alive");
-        msg.AddResponseHeader("Content-Length", $"{body.Length}");
-        msg.AddResponseHeader("Content-Type", "text/html");
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", msg.ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
     }
 
     static int seedId;
