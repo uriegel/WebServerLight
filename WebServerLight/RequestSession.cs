@@ -185,7 +185,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         if (request != null)
             msg.AddResponseHeader("Access-Control-Allow-Methods", "*");
         if (server.Configuration.AccessControlMaxAgeStr != null)
-        msg.AddResponseHeader("Access-Control-Max-Age", server.Configuration.AccessControlMaxAgeStr);
+            msg.AddResponseHeader("Access-Control-Max-Age", server.Configuration.AccessControlMaxAgeStr);
         await msg.SendOnlyHeaders();
 
         return true;
@@ -198,6 +198,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     readonly CancellationToken keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime).Token;
 
 }
+// TODO 404 keep-alive
 // TODO WebSockets
 // TODO Json serializing and File download with Content-Encoding chunked
 // TODO if Modified
