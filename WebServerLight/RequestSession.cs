@@ -198,3 +198,9 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     readonly CancellationToken keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime).Token;
 
 }
+// TODO WebSockets
+// TODO Json serializing and File download with Content-Encoding chunked
+// TODO if Modified
+// TODO HTTPS
+// TODO Routing modules (OnHost, OnSecure, OnGet, OnPost, OnJson, ...)
+
