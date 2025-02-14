@@ -1,8 +1,10 @@
 
+using WebServerLightSessions;
+
 namespace WebServerLight.Routing;
 
-class RequestRoute(Func<Message, ValueTask<bool>> request) : Route([])
+class RequestRoute(Func<Message, ValueTask<RouteResult>> request) : Route([])
 {
-    public override ValueTask<bool> Probe(Message msg) => request(msg);
+    public override ValueTask<RouteResult> Probe(Message msg) => request(msg);
 }
 

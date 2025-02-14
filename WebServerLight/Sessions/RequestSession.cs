@@ -1,7 +1,10 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using CsTools.Extensions;
+using CsTools.HttpRequest;
 using WebServerLight;
+using WebServerLight.Routing;
 using WebServerLight.Sessions;
 
 using static System.Console;
@@ -90,7 +93,13 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
-            return await server.Routes.Probe(msg);
+            return await server.Routes.Probe(msg) switch
+            {
+                RouteResult.Keepalive => true,
+                RouteResult.Detach => false,
+                RouteResult.Next => await true.SideEffectAsync(async _ => await Requests.Send404(msg)),
+                _ => false.SideEffect(_ => Close())
+            };
         }
         catch (SocketException se)
         {
@@ -134,7 +143,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     bool isClosed;
 }
 
-// TODO Route returns: close, keepalive, next, detach
 // TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked
