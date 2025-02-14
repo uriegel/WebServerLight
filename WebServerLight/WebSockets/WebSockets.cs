@@ -786,4 +786,70 @@
 
 
 
-		
+		//         internal bool CheckWsUpgrade()
+        // {
+        //     var upgrade = Headers["upgrade"];
+        //     return (upgrade != null) && (string.Compare(upgrade, "websocket", true) == 0);
+        // }
+
+
+
+		// /// <summary>
+		// /// 
+		// /// </summary>
+		// /// <returns>Die unterstützten Erweiterungen. Hinweis: Bei Safari wird permessage-deflate entfernt!</returns>
+		// async Task<WebSockets.Extensions> UpgradeToWebSocketAsync()
+        // {
+        //     var secKey = Headers["sec-websocket-key"];
+		// 	var userAgent = Headers["User-Agent"];
+		// 	var extensions = Headers["sec-websocket-extensions"]?.Split([';']) ?? [];
+		// 	var supportedExtensions = new WebSockets.Extensions(
+		// 		extensions.Contains("permessage-deflate")
+		// 			&& userAgent?.Contains("Macintosh", StringComparison.OrdinalIgnoreCase) != true
+		// 			&& userAgent?.Contains("iPhone", StringComparison.OrdinalIgnoreCase) != true
+		// 			&& userAgent?.Contains("iPad", StringComparison.OrdinalIgnoreCase) != true,
+		// 		extensions.Contains("watchdog"));
+        //     var extensionsHeader = supportedExtensions.PerMessageDeflate || supportedExtensions.WatchDog
+        //         ? $"\r\nSec-WebSocket-Extensions: {string.Join("; ", GetExtensions(supportedExtensions))}"
+        //         : "";
+        //     secKey += webSocketKeyConcat;
+        //     var hashKey = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(secKey));
+        //     var base64Key = Convert.ToBase64String(hashKey);
+        //     var response = $"{HttpResponseString} 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Accept: {base64Key}{extensionsHeader}\r\nServer: {ServerInstance.Configuration.ServerString}\r\n\r\n";
+        //     if (ServerInstance.Configuration.HeaderTracing)
+        //         Logger.Current.LowTrace(() => $"{Id} response");
+        //     var bytes = Encoding.UTF8.GetBytes(response);
+        //     await WriteAsync(bytes, 0, bytes.Length);
+        //     return supportedExtensions;
+
+		// 	static IEnumerable<string> GetExtensions(WebSockets.Extensions extensions)
+        //     {
+        //         if (extensions.PerMessageDeflate)
+		// 		{
+        //             yield return "permessage-deflate";
+        //             yield return "client_no_context_takeover";
+        //         }
+        //         if (extensions.WatchDog)
+        //             yield return "watchdog";
+        //     }
+        // }
+
+
+
+// namespace Caseris.Http.WebSockets
+// {
+//     class WebSocketSynchronousSession : WebSocketSessionBase
+//     {
+//         public WebSocketSynchronousSession(RequestSession session, IServer server, Configuration configuration, IWebSockets webSocketEvents, bool deflate) 
+//             : base(session, server, configuration, deflate)
+//             => this.webSocketEvents = webSocketEvents;
+
+// #pragma warning disable 1998
+//         protected override async Task OnMessage(string payload) => webSocketEvents.OnMessage(this, payload);
+
+//         protected override async Task OnClose() => webSocketEvents.Closed(this);
+        
+//         IWebSockets webSocketEvents;
+//     }
+// }
+
