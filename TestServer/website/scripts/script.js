@@ -2,6 +2,7 @@ const btn1 = document.getElementById("button")
 const btn2 = document.getElementById("button2")
 const btn3 = document.getElementById("button3")
 const btn4 = document.getElementById("button4")
+const btn5 = document.getElementById("button5")
 
 btn1.onclick = async () => {
     var res = await jsonPost("cmd1", {
@@ -34,6 +35,8 @@ btn4.onclick = async () => {
     console.log("cmd4", res)
 }
 
+btn5.onclick = startWebSockets
+
 async function jsonPost(method, input, base) {
 
     const msg = {
@@ -46,4 +49,11 @@ async function jsonPost(method, input, base) {
     return await response.json() 
 }
 
-
+function startWebSockets() {
+    const ws = new WebSocket("ws://localhost:8080/events")
+    ws.onopen = () => console.log("Web socket opened")
+    ws.onmessage = evt => console.log("Web socket msg", evt.data, evt)
+    ws.onerror = err => console.log("Web socket error", err)
+    ws.onclose = () => console.log("Web socket closed")
+}
+ 
