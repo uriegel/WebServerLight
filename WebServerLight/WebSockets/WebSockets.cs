@@ -780,3 +780,73 @@
 // 		#endregion
 // 	}
 // }
+
+
+
+		// 	const url = `${serverUrl}/proxy/Events/${WebSocketEventProcessing.sessionId}`.replace('http', 'ws')
+		// 	this.webSocket = new WebSocket(url)
+		// 	this.pinger = new Pinger(this.webSocket)
+
+		// 	if (!WebSocketEventProcessing.sessionId)
+		// 		return
+
+		// 	this.webSocket.onopen = () => {
+		// 		this.opened = true
+		// 		WebSocketEventProcessing.resetReconnecting()
+		// 		setConnected(true)
+		// 		this.pinger.send()
+		// 	}
+
+		// 	this.webSocket.onmessage = evt => {
+		// 		if (evt.data === 'pong') {
+		// 			this.pinger.onPong()
+		// 			return
+		// 		}
+		// 		if (evt.data === 'invalid') {
+		// 			WebSocketEventProcessing.destroy(false, true)
+		// 			if (this.onError)
+		// 				this.onError({ Code: 5, Description: 'Invalid session id' } as ReturnValue)
+		// 			this.onError = undefined
+		// 			return
+		// 		}
+		// 		const event = JSON.parse(evt.data)
+		// 		trace('proxy-event', event)
+		// 		const loggedOut = event.ProxyMessages && event.ProxyMessages.find((proxyMessage: ProxyMessage) => proxyMessage.Reason === ProxyMessageReason.Logout)
+		// 		const cancel = event.returnValue.Code === 111
+		// 		if (!cancel) {
+		// 			this.pinger.onPong()
+		// 			WebSocketEventProcessing.newEvent(event)
+		// 		}
+		// 		else
+		// 			trace('proxy-event', 'canceled')
+		// 		if (loggedOut)
+		// 			trace('proxy-event', 'loggedOut')
+
+		// 		if (loggedOut || cancel)
+		// 			WebSocketEventProcessing.destroy(false, !loggedOut || cancel)
+		// 	}
+
+		// 	this.webSocket.onerror = error => {
+		// 		console.warn('proxy-event: Error in WebSocket connection', error)
+		// 	}
+
+		// 	this.webSocket.onclose = () => {
+		// 		console.log('proxy-event: Connection closed')
+		// 		if (!this.opened && !reconnect)
+		// 			startHttpEventProcessingWithPolling(WebSocketEventProcessing.sessionId, WebSocketEventProcessing.newEvent, WebSocketEventProcessing.callbackError)
+		// 		else
+		// 			WebSocketEventProcessing.destroy(true, true)
+		// 	}
+
+		// 	access.stopEventProcessing = () => WebSocketEventProcessing.destroy(false, false)
+		// }
+
+		// private destroy() {		
+		// 	console.log('proxy-event: destroying...')
+		// 	this.pinger.destroy()
+		// 	this.webSocket.onopen = null
+		// 	this.webSocket.onmessage = null
+		// 	this.webSocket.onerror = null
+		// 	this.webSocket.onclose = null
+		// 	this.webSocket.close()
+		// }

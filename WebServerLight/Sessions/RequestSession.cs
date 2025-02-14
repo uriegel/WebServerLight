@@ -199,6 +199,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
 
 }
 // TODO 404 keep-alive
+// TODO WebSockets client test in default website
 // TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked
