@@ -23,18 +23,22 @@ class Server(ServerBuilder server) : IServer
         ServicePointManager.DefaultConnectionLimit = 1000;
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-
         var routes = new List<Route>();
 
-        // routes.Add(new MethodRoute(Method.Post, [..]))
+        var postRoute = new List<Route>();
+        if (Configuration.JsonPost != null)
+            postRoute.Add(new RequestRoute(Requests.ServePost));
+        if (postRoute.Count > 0)
+            routes.Add(new MethodRoute(Method.Post, postRoute));
 
         var getRoute = new List<Route>();
         if (Configuration.getRequest != null)
-            getRoute.Add(new RequestRoute(msg => Requests.ServeGet(this, msg)));
+            getRoute.Add(new RequestRoute(Requests.ServeGet));
         if (Configuration.IsWebsiteFromResource)
             getRoute.Add(new RequestRoute(Requests.ServeResourceWebsite));
         if (getRoute.Count > 0)
             routes.Add(new MethodRoute(Method.Get, getRoute));
+
         routes.Add(new RequestRoute(Requests.Send404));
         Routes = new Route(routes);
 

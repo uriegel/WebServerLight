@@ -21,6 +21,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         ResponseHeaders.Add(key, value);
     }
 
+    public Server Server { get => server; }
+
     public CancellationToken KeepAliveCancellation { get => keepAliveCancellation; }
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);

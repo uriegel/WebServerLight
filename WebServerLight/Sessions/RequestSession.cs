@@ -93,10 +93,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             return await server.Routes.Probe(msg);
             // if (msg.Method == Method.Options && await ServeOptions(msg))
             //     return true;
-            // else if (msg.Method == Method.Post
-            //         && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
-            //         && await CheckPostJsonRequest(msg))
-            //     return true;
         }
         catch (SocketException se)
         {
@@ -140,7 +136,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     bool isClosed;
 }
 
-// TODO Post
 // TODO Options
 // TODO WebSockets
 // TODO if Modified
@@ -148,3 +143,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
 // TODO HTTPS
 // TODO Routing modules (OnHost, OnSecure, OnGet, OnPost, OnJson, ...)
 
+// TODO PostJson:
+// else if (msg.Method == Method.Post
+//         && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
+//         && await CheckPostJsonRequest(msg))
