@@ -23,7 +23,10 @@ class Server(ServerBuilder server) : IServer
         ServicePointManager.DefaultConnectionLimit = 1000;
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-        var routes = new List<Route>();
+        var routes = new List<Route>
+        {
+            new MethodRoute(Method.Options, [ new RequestRoute(Requests.ServeOptions) ])
+        };
 
         var postRoute = new List<Route>();
         if (Configuration.JsonPost != null)

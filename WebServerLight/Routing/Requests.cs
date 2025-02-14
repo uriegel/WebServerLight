@@ -47,7 +47,7 @@ static class Requests
             return false;
     }
 
-    async static Task<bool> ServeOptions(Message msg)
+    public static async ValueTask<bool> ServeOptions(Message msg)
     {
         var request = msg.RequestHeaders.GetValue("Access-Control-Request-Headers");
         if (request != null)

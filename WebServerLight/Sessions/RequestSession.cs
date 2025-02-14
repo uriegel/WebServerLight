@@ -91,8 +91,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         try
         {
             return await server.Routes.Probe(msg);
-            // if (msg.Method == Method.Options && await ServeOptions(msg))
-            //     return true;
         }
         catch (SocketException se)
         {
@@ -136,7 +134,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     bool isClosed;
 }
 
-// TODO Options
 // TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked
