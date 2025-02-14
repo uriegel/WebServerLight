@@ -1,10 +1,11 @@
 using System.Collections.Immutable;
 using System.Text;
 using CsTools.Extensions;
+using WebServerLight.Streams;
 
 namespace WebServerLight;
 
-class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin) 
+class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation) 
 {
     public Method Method { get => method; }
     public string Url { get => url; }
@@ -19,6 +20,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         ResponseHeaders.Remove(key);
         ResponseHeaders.Add(key, value);
     }
+
+    public CancellationToken KeepAliveCancellation { get => keepAliveCancellation; }
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -56,29 +59,27 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
                 var url = parts[0].StringBetween(" ", " ");
                 var requestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
 
-                return new Message(server, method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex));
+                return new Message(server, method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex), cancellation);
             }
         }
         return null;
     }
 
-    public async Task SendStream(Stream stream, string contentType, int length)
+    public async Task SendStream(Stream stream, string contentType, int length, CancellationToken keepAliveCancellation)
     {
         AddResponseHeader("Content-Length", $"{length}");
         AddResponseHeader("Content-Type", contentType);
         InitResponseHeaders(true);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
-        await stream.CopyToAsync(networkStream);
-        await stream.FlushAsync();
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"), keepAliveCancellation);
+        await stream.CopyToAsync(networkStream, keepAliveCancellation);
+        await stream.FlushAsync(keepAliveCancellation);
     }
 
-    public async Task Send404()
+    public async ValueTask<bool> Send(string body, CancellationToken keepAliveCancellation)
     {
-        var body = "I can't find what you're looking for...";
         InitResponseHeaders(true);
-        AddResponseHeader("Content-Length", $"{body.Length}");
-        AddResponseHeader("Content-Type", MimeTypes.TextPlain);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"));
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
+        return true;
     }
 
     public async Task SendOnlyHeaders(bool code204 = true)

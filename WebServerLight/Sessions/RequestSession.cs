@@ -1,11 +1,12 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using CsTools.Extensions;
+using WebServerLight;
+using WebServerLight.Sessions;
 
 using static System.Console;
 
-namespace WebServerLight;
+namespace WebServerLightSessions;
 
 class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime)
 {
@@ -89,19 +90,13 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
-            if (msg.Method == Method.Options && await ServeOptions(msg))
-                return true;
-            else if (msg.Method == Method.Post
-                    && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
-                    && await CheckPostJsonRequest(msg))
-                return true;
-            else if (msg.Method == Method.Get && await ServeGet(msg))
-                return true;
-            else if (server.Configuration.IsWebsiteFromResource && await CheckResourceWebsite(msg))
-                return true;
-            else
-                await msg.Send404();
-            return true;
+            return await server.Routes.Probe(msg);
+            // if (msg.Method == Method.Options && await ServeOptions(msg))
+            //     return true;
+            // else if (msg.Method == Method.Post
+            //         && string.Compare(msg.RequestHeaders.GetValue("Content-Type"), MimeTypes.ApplicationJson, StringComparison.OrdinalIgnoreCase) == 0
+            //         && await CheckPostJsonRequest(msg))
+            //     return true;
         }
         catch (SocketException se)
         {
@@ -138,68 +133,15 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             return false;
         }
     }
-    async Task<bool> CheckResourceWebsite(Message msg)
-    {
-        var url = msg.Url.SubstringUntil('?');
-        url = url != "/" ? url : "/index.html";
-        var res = Resources.Get(url);
-        if (res != null)
-        {
-            await msg.SendStream(res, url?.GetFileExtension()?.ToMimeType() ?? MimeTypes.TextHtml, (int)res.Length);
-            return true;
-        }
-        else
-            return false;
-    }
-
-    async Task<bool> ServeGet(Message msg)
-    {
-        if (server.Configuration.getRequest != null)
-        {
-            var request = new GetRequest(msg.Url, async (stream, length, type) => await msg.SendStream(stream, type, length));
-            return await server.Configuration.getRequest(request);
-        }
-        else
-            return false;
-    }
-
-    async Task<bool> CheckPostJsonRequest(Message msg)
-    {
-        var url = msg.Url.SubstringUntil('?');
-        var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue && server.Configuration.jsonPost != null && msg.Payload != null)
-        {
-            var request = new JsonRequest(url, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length), keepAliveCancellation);
-            return await server.Configuration.jsonPost(request);
-        }
-        else
-            return false;
-    }
-
-    async Task<bool> ServeOptions(Message msg)
-    {
-        var request = msg.RequestHeaders.GetValue("Access-Control-Request-Headers");
-        if (request != null)
-            msg.AddResponseHeader("Access-Control-Allow-Headers", request);
-        request = msg.RequestHeaders.GetValue("Access-Control-Request-Method");
-        if (request != null)
-            msg.AddResponseHeader("Access-Control-Allow-Methods", "*");
-        if (server.Configuration.AccessControlMaxAgeStr != null)
-            msg.AddResponseHeader("Access-Control-Max-Age", server.Configuration.AccessControlMaxAgeStr);
-        await msg.SendOnlyHeaders();
-
-        return true;
-    }
 
     static int seedId;
     readonly Stopwatch stopwatch = new();
-
-    bool isClosed;
     readonly CancellationToken keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime).Token;
-
+    bool isClosed;
 }
-// TODO 404 keep-alive
-// TODO WebSockets client test in default website
+
+// TODO Post
+// TODO Options
 // TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked

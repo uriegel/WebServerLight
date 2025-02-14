@@ -1,6 +1,6 @@
 using CsTools;
 
-namespace WebServerLight;
+namespace WebServerLight.Streams;
 
 class PayloadStream(Memory<byte> payloadBegin, Stream networkStream, int length) : StreamBase
 {
