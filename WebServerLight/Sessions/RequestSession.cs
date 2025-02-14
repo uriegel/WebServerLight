@@ -134,6 +134,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     bool isClosed;
 }
 
+// TODO Route returns: close, keepalive, next, detach
 // TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked
