@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using CsTools.Extensions;
-using CsTools.HttpRequest;
 using WebServerLight;
 using WebServerLight.Routing;
 using WebServerLight.Sessions;
@@ -143,7 +142,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     bool isClosed;
 }
 
-// TODO WebSockets
 // TODO if Modified
 // TODO Json serializing and File download with Content-Encoding chunked
 // TODO HTTPS

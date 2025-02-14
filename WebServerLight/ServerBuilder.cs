@@ -31,6 +31,9 @@ public class ServerBuilder
     public ServerBuilder JsonPost(Func<JsonRequest, Task<bool>> request)
         => this.SideEffect(_ => jsonPost = request);
 
+    public ServerBuilder WebSocket(Action<IWebSocket> onWebSocket)
+        => this.SideEffect(_ => this.onWebSocket = onWebSocket);
+
     public ServerBuilder KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
 
@@ -53,6 +56,7 @@ public class ServerBuilder
     internal bool IsWebsiteFromResource { get; private set; }
     internal Func<JsonRequest, Task<bool>>? jsonPost;
     internal Func<GetRequest, Task<bool>>? getRequest;
+    internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
 
     ServerBuilder() { }

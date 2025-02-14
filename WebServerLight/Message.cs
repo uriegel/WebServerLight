@@ -1,16 +1,19 @@
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using System.Text;
 using CsTools.Extensions;
+using Microsoft.VisualBasic;
+using WebServerLight.Sessions;
 using WebServerLight.Streams;
 
 namespace WebServerLight;
 
-class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation) 
+class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation)
 {
     public Method Method { get => method; }
     public string Url { get => url; }
 
-    public PayloadStream? Payload {  get => _Payload ??= GetPayload(); }
+    public PayloadStream? Payload { get => _Payload ??= GetPayload(); }
     PayloadStream? _Payload;
 
     public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
@@ -84,19 +87,53 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         return true;
     }
 
-    public async Task SendOnlyHeaders(bool code204 = true)
+    public async Task SendOnlyHeaders(int code = 204, string status = "204 No Content")
     {
         InitResponseHeaders(false);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 {(code204 ? "204 No Content" : "200 OK")}\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 {code} {status}\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"));
     }
 
-    PayloadStream? GetPayload() 
+    public async Task UpgradeWebSocket()
+    {
+        var secKey = RequestHeaders.GetValue("sec-websocket-key");
+        var userAgent = RequestHeaders.GetValue("User-Agent");
+        var extensions = RequestHeaders.GetValue("sec-websocket-extensions")?.Split([';']) ?? [];
+        var supportedExtensions = new Extensions(
+            extensions.Contains("permessage-deflate")
+                && userAgent?.Contains("Macintosh", StringComparison.OrdinalIgnoreCase) != true
+                && userAgent?.Contains("iPhone", StringComparison.OrdinalIgnoreCase) != true
+                && userAgent?.Contains("iPad", StringComparison.OrdinalIgnoreCase) != true, extensions.Contains("watchdog"));
+        var extensionsHeader = supportedExtensions.PerMessageDeflate || supportedExtensions.WatchDog
+            ? $"\r\nSec-WebSocket-Extensions: {string.Join("; ", GetExtensions(supportedExtensions))}"
+            : "";
+        secKey += webSocketKeyConcat;
+        var hashKey = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(secKey));
+        var base64Key = Convert.ToBase64String(hashKey);
+
+        AddResponseHeader("Connection", "Upgrade");
+        AddResponseHeader("Upgrade", "websocket");
+        AddResponseHeader("Sec-WebSocket-Accept", base64Key + extensionsHeader);
+        await SendOnlyHeaders(101, "Switching Protocols");
+        server.Configuration.onWebSocket?.Invoke(new WebSocketSession(Url, networkStream, supportedExtensions));
+        
+        static IEnumerable<string> GetExtensions(Extensions extensions)
+        {
+            if (extensions.PerMessageDeflate)
+            {
+                yield return "permessage-deflate";
+                yield return "client_no_context_takeover";
+            }
+            if (extensions.WatchDog)
+                yield return "watchdog";
+        }
+    }
+
+    PayloadStream? GetPayload()
     {
         var length = RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue)
-            return new PayloadStream(payloadBegin, networkStream, length.Value);  
-        else
-            return null;
+        return length.HasValue
+            ? new PayloadStream(payloadBegin, networkStream, length.Value)
+            : null;
     }
 
     void InitResponseHeaders(bool payload)
@@ -121,7 +158,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
                 {
                     var originToAllow = server.Configuration.AllowedOrigins.FirstOrDefault(n => string.Compare(n, origin, true) == 0);
                     if (originToAllow != null)
-                        AddResponseHeader("Access-Control-Allow-Origin", originToAllow);            
+                        AddResponseHeader("Access-Control-Allow-Origin", originToAllow);
                 }
             }
         }
@@ -132,5 +169,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
             headerLine.SubstringUntil(':'),
             headerLine.SubstringAfter(':').Trim()
         );
+        
+    const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";        
 }
 

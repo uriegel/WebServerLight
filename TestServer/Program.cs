@@ -12,6 +12,7 @@ var server =
         .WebsiteFromResource()
         .Get(Get)
         .JsonPost(JsonPost)
+        .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))
         .Build();
@@ -59,6 +60,16 @@ async Task<bool> JsonPost(JsonRequest request)
     }
     return true;
 } 
+
+async void WebSocket(IWebSocket webSocket)
+{
+    var i = 0;
+    while (true)
+    {
+        await Task.Delay(5000);
+        await webSocket.SendString($"Web socket text: {++i}");
+    }
+}
 
 record Data(string Text, int Id, IEnumerable<string> LongArray);
 record Response(IEnumerable<Contact> Contacts, int ID, string Name);

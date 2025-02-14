@@ -1,12 +1,4 @@
-// using System;
-// using System.Collections.Generic;
-// using System.Text;
-
-// namespace Caseris.Http.WebSockets
-// {
-// 	record Extensions(bool PerMessageDeflate, bool WatchDog);
-// }
-
+namespace WebServerLight.WebSockets;
 
 // using Caseris.Http.Interfaces;
 // using System;
@@ -106,21 +98,6 @@
 
 // 		public string? UserAgent { get => session?.Headers?.UserAgent;  }
 
-//         public void Send(string payload)
-//         {
-//             var memStm = new MemoryStream(Encoding.UTF8.GetBytes(payload));
-//             WriteStream(memStm);
-//         }
-
-//         public void SendJson(object jsonObject)
-//         {
-//             var type = jsonObject.GetType();
-//             var jason = new DataContractJsonSerializer(type);
-//             var memStm = new MemoryStream();
-//             jason.WriteObject(memStm, jsonObject);
-//             memStm.Position = 0;
-//             WriteStream(memStm);
-//         }
 
 //         public Task SendAsync(string payload)
 //         {
@@ -252,139 +229,8 @@
 //         protected virtual Task OnClose() => Task.FromResult(0);
 //         protected abstract Task OnMessage(string payload);
 
-//         void WriteStream(MemoryStream payloadStream, OpCode? opCode = null)
-//         {
-//             try
-//             {
-//                 var (buffer, deflate) = GetPayload(payloadStream);
-//                 var header = WriteHeader(buffer.Length, deflate, opCode);
-//                 semaphoreSlim.Wait();
-//                 try
-//                 {
-//                     networkStream.Write(header, 0, header.Length);
-//                     networkStream.Write(buffer, 0, buffer.Length);
-//                     AddBytes(header.Length + buffer.Length);
-//                 }
-//                 catch
-//                 {
-//                     try
-//                     {
-//                         networkStream.Close();
-//                     }
-//                     catch { }
-//                 }
-//                 finally
-//                 {
-//                     semaphoreSlim.Release();
-//                 }
-//             }
-// 			catch (ConnectionClosedException)
-//             {
-//             }
-//         }
 
-//         async Task WriteStreamAsync(MemoryStream payloadStream)
-//         {
-//             var (buffer, deflate) = GetPayload(payloadStream);
-//             var header = WriteHeader(buffer.Length, deflate);
-//             await semaphoreSlim.WaitAsync();
-//             try
-//             {
-//                 networkStream.Write(header, 0, header.Length);
-//                 networkStream.Write(buffer, 0, buffer.Length);
-//                 AddBytes(header.Length + buffer.Length);
-//             }
-//             catch
-//             {
-//                 try
-//                 {
-//                     networkStream.Close();
-//                 }
-//                 catch { }
-//                 throw;
-//             }
-//             finally
-//             {
-//                 semaphoreSlim.Release();
-//             }
-//         }
 
-//         (byte[] buffer, bool deflate) GetPayload(MemoryStream payloadStream)
-//         {
-//             var deflate = useDeflate && payloadStream.Length > configuration.MinSizeForDeflate;
-//             if (deflate)
-//             {
-//                 var ms = new MemoryStream();
-//                 var compressedStream = new DeflateStream(ms, CompressionMode.Compress, true);
-//                 payloadStream.CopyTo(compressedStream);
-//                 compressedStream.Close();
-//                 ms.WriteByte(0); // BFinal!
-//                 payloadStream = ms;
-//             }
-
-//             payloadStream.Capacity = (int)payloadStream.Length;
-//             return (payloadStream.GetBuffer(), deflate);
-//         }
-
-//         /// <summary>
-//         /// Schreibt den WebSocketHeader
-//         /// </summary>
-//         /// <param name="payloadLength"></param>
-//         /// <param name="deflate"></param>
-//         /// <param name="opcode"></param>
-//         byte[] WriteHeader(int payloadLength, bool deflate, OpCode? opcode = null)
-//         {
-//             if (opcode == null)
-//                 opcode = OpCode.Text;
-//             var length = payloadLength;
-//             var FRRROPCODE = (byte)((deflate ? 0xC0 : 0x80) + (byte)(int)opcode.Value); //'FIN is set, and OPCODE is 1 (Text) or opCode
-
-//             int headerLength;
-//             if (length <= 125)
-//                 headerLength = 2;
-//             else if (length <= ushort.MaxValue)
-//                 headerLength = 4;
-//             else
-//                 headerLength = 10;
-//             var buffer = new byte[headerLength];
-//             if (length <= 125)
-//             {
-//                 buffer[0] = FRRROPCODE;
-//                 buffer[1] = Convert.ToByte(length);
-//             }
-//             else if (length <= ushort.MaxValue)
-//             {
-//                 buffer[0] = FRRROPCODE;
-//                 buffer[1] = 126;
-//                 var sl = (ushort)length;
-//                 var byteArray = BitConverter.GetBytes(sl);
-//                 var eins = byteArray[0];
-//                 buffer[2] = byteArray[1];
-//                 buffer[3] = eins;
-//             }
-//             else
-//             {
-//                 buffer[0] = FRRROPCODE;
-//                 buffer[1] = 127;
-//                 var byteArray = BitConverter.GetBytes((ulong)length);
-//                 var eins = byteArray[0];
-//                 var zwei = byteArray[1];
-//                 var drei = byteArray[2];
-//                 var vier = byteArray[3];
-//                 var fünf = byteArray[4];
-//                 var sechs = byteArray[5];
-//                 var sieben = byteArray[6];
-//                 buffer[2] = byteArray[7];
-//                 buffer[3] = sieben;
-//                 buffer[4] = sechs;
-//                 buffer[5] = fünf;
-//                 buffer[6] = vier;
-//                 buffer[7] = drei;
-//                 buffer[8] = zwei;
-//                 buffer[9] = eins;
-//             }
-//             return buffer;
-//         }
 
 //         #endregion
 
@@ -434,28 +280,6 @@
 
 
 
-// namespace Caseris.Http.WebSockets
-// {
-// 	public enum OpCode : byte
-// 	{
-// 		/// <summary>
-// 		/// Diese Nachricht muss an die vorherige angehängt werden. Wenn der fin-Wert 0 ist, folgen weitere Fragmente, 
-// 		/// bei fin=1 ist die Nachricht komplett verarbeitet.
-// 		/// </summary>
-// 		ContinuationFrame = 0,
-// 		Text,
-// 		Binary,
-// 		Close = 8,
-// 		/// <summary>
-// 		/// Ping erhalten, direkt einen Pong zurücksenden mit denselben payload-Daten
-// 		/// </summary>
-// 		Ping,
-// 		/// <summary>
-// 		/// Wird serverseitig ignoriert
-// 		/// </summary>
-// 		Pong
-// 	}
-// }
 
 // namespace Caseris.Http.WebSockets;
 
@@ -781,46 +605,6 @@
 // 	}
 // }
 
-
-
-
-
-
-		//         internal bool CheckWsUpgrade()
-        // {
-        //     var upgrade = Headers["upgrade"];
-        //     return (upgrade != null) && (string.Compare(upgrade, "websocket", true) == 0);
-        // }
-
-
-
-		// /// <summary>
-		// /// 
-		// /// </summary>
-		// /// <returns>Die unterstützten Erweiterungen. Hinweis: Bei Safari wird permessage-deflate entfernt!</returns>
-		// async Task<WebSockets.Extensions> UpgradeToWebSocketAsync()
-        // {
-        //     var secKey = Headers["sec-websocket-key"];
-		// 	var userAgent = Headers["User-Agent"];
-		// 	var extensions = Headers["sec-websocket-extensions"]?.Split([';']) ?? [];
-		// 	var supportedExtensions = new WebSockets.Extensions(
-		// 		extensions.Contains("permessage-deflate")
-		// 			&& userAgent?.Contains("Macintosh", StringComparison.OrdinalIgnoreCase) != true
-		// 			&& userAgent?.Contains("iPhone", StringComparison.OrdinalIgnoreCase) != true
-		// 			&& userAgent?.Contains("iPad", StringComparison.OrdinalIgnoreCase) != true,
-		// 		extensions.Contains("watchdog"));
-        //     var extensionsHeader = supportedExtensions.PerMessageDeflate || supportedExtensions.WatchDog
-        //         ? $"\r\nSec-WebSocket-Extensions: {string.Join("; ", GetExtensions(supportedExtensions))}"
-        //         : "";
-        //     secKey += webSocketKeyConcat;
-        //     var hashKey = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(secKey));
-        //     var base64Key = Convert.ToBase64String(hashKey);
-        //     var response = $"{HttpResponseString} 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Accept: {base64Key}{extensionsHeader}\r\nServer: {ServerInstance.Configuration.ServerString}\r\n\r\n";
-        //     if (ServerInstance.Configuration.HeaderTracing)
-        //         Logger.Current.LowTrace(() => $"{Id} response");
-        //     var bytes = Encoding.UTF8.GetBytes(response);
-        //     await WriteAsync(bytes, 0, bytes.Length);
-        //     return supportedExtensions;
 
 		// 	static IEnumerable<string> GetExtensions(WebSockets.Extensions extensions)
         //     {
