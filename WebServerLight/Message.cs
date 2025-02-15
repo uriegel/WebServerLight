@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using CsTools.Extensions;
+using WebServerLight.Routing;
 using WebServerLight.Sessions;
 using WebServerLight.Streams;
 
@@ -10,6 +12,7 @@ using static CsTools.Functional.Memoization;
 namespace WebServerLight;
 
 class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation)
+    : IRequest
 {
     public Method Method { get => method; }
 
@@ -34,6 +37,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     public CancellationToken KeepAliveCancellation { get => keepAliveCancellation; }
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public ImmutableDictionary<string, string> QueryParts => throw new NotImplementedException();
 
     public static async Task<Message?> Read(Server server, Stream networkStream, CancellationToken cancellation)
     {
@@ -90,6 +95,24 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         InitResponseHeaders(true);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
         return true;
+    }
+
+    public async Task SendAsync(Stream payload, int contentLength, string contentType)
+        => await SendStream(payload, contentType, contentLength, KeepAliveCancellation);
+
+    public async Task Send404() => await Requests.Send404(this);
+
+    public async Task<T?> DeserializeAsync<T>()
+        => Payload != null
+            ? await JsonSerializer.DeserializeAsync<T>(Payload, Json.Defaults, KeepAliveCancellation)
+            : default;
+
+    public async Task SendJsonAsync<T>(T t)
+    {
+        var ms = new MemoryStream();
+        await JsonSerializer.SerializeAsync(ms, t, Json.Defaults, KeepAliveCancellation);
+        ms.Position = 0;
+        await SendStream(ms, MimeTypes.ApplicationJson, (int)ms.Length, KeepAliveCancellation);
     }
 
     public async Task SendOnlyHeaders(int code = 204, string status = "204 No Content")

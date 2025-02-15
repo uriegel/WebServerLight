@@ -25,10 +25,10 @@ public class ServerBuilder
     public ServerBuilder WebsiteFromResource()
         => this.SideEffect(_ => IsWebsiteFromResource = true);
 
-    public ServerBuilder Get(Func<GetRequest, Task<bool>> request)
+    public ServerBuilder Get(Func<IRequest, Task<bool>> request)
         => this.SideEffect(_ => getRequest = request);
 
-    public ServerBuilder JsonPost(Func<JsonRequest, Task<bool>> request)
+    public ServerBuilder JsonPost(Func<IRequest, Task<bool>> request)
         => this.SideEffect(_ => jsonPost = request);
 
     public ServerBuilder WebSocket(Action<IWebSocket> onWebSocket)
@@ -54,8 +54,8 @@ public class ServerBuilder
     internal int? HttpPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal bool IsWebsiteFromResource { get; private set; }
-    internal Func<JsonRequest, Task<bool>>? jsonPost;
-    internal Func<GetRequest, Task<bool>>? getRequest;
+    internal Func<IRequest, Task<bool>>? jsonPost;
+    internal Func<IRequest, Task<bool>>? getRequest;
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
 

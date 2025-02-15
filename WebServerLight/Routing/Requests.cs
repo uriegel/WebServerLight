@@ -29,22 +29,17 @@ static class Requests
     }
 
     public static async ValueTask<RouteResult> ServeGet(Message msg)
-    {
-        var request = new GetRequest(msg.Url, msg.GetQueryParts, async (stream, length, type) => await msg.SendStream(stream, type, length, msg.KeepAliveCancellation));
-        return await msg.Server.Configuration.getRequest!(request)
+        => await msg.Server.Configuration.getRequest!(msg)
             ? RouteResult.Keepalive 
             : RouteResult.Next;
-    }
     
     public async static ValueTask<RouteResult> ServePost(Message msg)
     {
         var url = msg.Url;
         var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        // TODO POST without payload!!
         if (length.HasValue && msg.Payload != null)
         {
-            var request = new JsonRequest(url, msg.GetQueryParts, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length, msg.KeepAliveCancellation), msg.KeepAliveCancellation);
-            return await msg.Server.Configuration.jsonPost!(request)
+            return await msg.Server.Configuration.jsonPost!(msg)
                 ? RouteResult.Keepalive 
                 : RouteResult.Next;
         }

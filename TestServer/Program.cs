@@ -21,7 +21,7 @@ server.Start();
 ReadLine();
 server.Stop();
 
-async Task<bool> Get(GetRequest request)
+async Task<bool> Get(IRequest request)
 {
     if (request.Url == "/image")
     {
@@ -38,7 +38,7 @@ async Task<bool> Get(GetRequest request)
         return false;
 }
 
-async Task<bool> JsonPost(JsonRequest request)
+async Task<bool> JsonPost(IRequest request)
 {
     if (request.Url == "/json/cmd4")
     {
@@ -46,7 +46,7 @@ async Task<bool> JsonPost(JsonRequest request)
             new Contact("Uwe Riegel", 34),
             new Contact("Miles Davis", 90),
             new Contact("John Coltrane", 99)], 123, "Response without input");
-        await request.SendAsync(response);
+        await request.SendJsonAsync(response);
     }
     else
     {
@@ -56,7 +56,7 @@ async Task<bool> JsonPost(JsonRequest request)
             new Contact("Miles Davis", 90),
             new Contact("John Coltrane", 99)], 123, request.Url);
 
-        await request.SendAsync(response);
+        await request.SendJsonAsync(response);
     }
     return true;
 } 
