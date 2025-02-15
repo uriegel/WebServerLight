@@ -51,7 +51,8 @@ class WebSocketSession(string url, Stream networkStream, Extensions extensions) 
                 networkStream.Close();
             }
             catch { }
-            throw;
+            // TODO: error while sending events to a closed websocket!
+            // throw;
         }
         finally
         {

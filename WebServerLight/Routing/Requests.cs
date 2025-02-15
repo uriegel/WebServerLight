@@ -16,7 +16,7 @@ static class Requests
 
     public static async ValueTask<RouteResult> ServeResourceWebsite(Message msg)
     {
-        var url = msg.Url.SubstringUntil('?');
+        var url = msg.Url;
         url = url != "/" ? url : "/index.html";
         var res = Resources.Get(url);
         if (res != null)
@@ -30,7 +30,7 @@ static class Requests
 
     public static async ValueTask<RouteResult> ServeGet(Message msg)
     {
-        var request = new GetRequest(msg.Url, async (stream, length, type) => await msg.SendStream(stream, type, length, msg.KeepAliveCancellation));
+        var request = new GetRequest(msg.Url, msg.GetQueryParts, async (stream, length, type) => await msg.SendStream(stream, type, length, msg.KeepAliveCancellation));
         return await msg.Server.Configuration.getRequest!(request)
             ? RouteResult.Keepalive 
             : RouteResult.Next;
@@ -38,12 +38,12 @@ static class Requests
     
     public async static ValueTask<RouteResult> ServePost(Message msg)
     {
-        var url = msg.Url.SubstringUntil('?');
+        var url = msg.Url;
         var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
         // TODO POST without payload!!
         if (length.HasValue && msg.Payload != null)
         {
-            var request = new JsonRequest(url, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length, msg.KeepAliveCancellation), msg.KeepAliveCancellation);
+            var request = new JsonRequest(url, msg.GetQueryParts, msg.Payload, async str => await msg.SendStream(str, MimeTypes.ApplicationJson, (int)str.Length, msg.KeepAliveCancellation), msg.KeepAliveCancellation);
             return await msg.Server.Configuration.jsonPost!(request)
                 ? RouteResult.Keepalive 
                 : RouteResult.Next;

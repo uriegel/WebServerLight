@@ -1,10 +1,13 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace WebServerLight;
 
-public class JsonRequest(string url, Stream payload, Func<Stream, Task> sendData, CancellationToken cancellation)
+public class JsonRequest(string url, Func<ImmutableDictionary<string, string>> getQueryParts, Stream payload, Func<Stream, Task> sendData, CancellationToken cancellation)
 {
     public string Url { get => url; }
+    public ImmutableDictionary<string, string> QueryParts { get => getQueryParts(); }
+
     public async Task<T?> DeserializeAsync<T>()
         => await JsonSerializer.DeserializeAsync<T>(payload, Json.Defaults, cancellation);
 

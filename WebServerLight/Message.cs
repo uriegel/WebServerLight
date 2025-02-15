@@ -2,21 +2,26 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using CsTools.Extensions;
-using Microsoft.VisualBasic;
 using WebServerLight.Sessions;
 using WebServerLight.Streams;
+
+using static CsTools.Functional.Memoization;
 
 namespace WebServerLight;
 
 class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation)
 {
     public Method Method { get => method; }
-    public string Url { get => url; }
+
+    public string Url { get => _Url ??= url.SubstringUntil('?'); }
+    string? _Url;
 
     public PayloadStream? Payload { get => _Payload ??= GetPayload(); }
     PayloadStream? _Payload;
 
     public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
+
+    public Func<ImmutableDictionary<string, string>> GetQueryParts { get; } = Memoize(() => MakeQuery(url.SubstringAfter('?')).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase));
 
     public void AddResponseHeader(string key, string value)
     {
@@ -115,7 +120,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         AddResponseHeader("Sec-WebSocket-Accept", base64Key + extensionsHeader);
         await SendOnlyHeaders(101, "Switching Protocols");
         server.Configuration.onWebSocket?.Invoke(new WebSocketSession(Url, networkStream, supportedExtensions));
-        
+
         static IEnumerable<string> GetExtensions(Extensions extensions)
         {
             if (extensions.PerMessageDeflate)
@@ -169,7 +174,19 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
             headerLine.SubstringUntil(':'),
             headerLine.SubstringAfter(':').Trim()
         );
-        
-    const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";        
+
+    static IEnumerable<KeyValuePair<string, string>> MakeQuery(string query)
+        => query
+            .SideEffect(n => Console.WriteLine($"Male jetzz {n}"))
+            .Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(MakeQueryParam);
+
+    static KeyValuePair<string, string> MakeQueryParam(string line)
+        => new(
+            line.SubstringUntil('='),
+            line.SubstringAfter('=').Trim()
+        );
+
+    const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 }
 

@@ -78,10 +78,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         try
         {
             if (fullClose)
-            {
                 networkStream.Close();
-                isClosed = true;
-            }
             else
                 socketSession.TcpClient.Client.Shutdown(SocketShutdown.Send);
         }
@@ -139,7 +136,6 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     static int seedId;
     readonly Stopwatch stopwatch = new();
     readonly CancellationToken keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime).Token;
-    bool isClosed;
 }
 
 // TODO if Modified
