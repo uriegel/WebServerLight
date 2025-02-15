@@ -24,7 +24,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     public ImmutableDictionary<string, string> RequestHeaders { get => requestHeaders; }
 
-    public Func<ImmutableDictionary<string, string>> GetQueryParts { get; } = Memoize(() => MakeQuery(url.SubstringAfter('?')).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase));
+    public ImmutableDictionary<string, string> QueryParts { get => GetQueryParts(); }
 
     public void AddResponseHeader(string key, string value)
     {
@@ -37,8 +37,6 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     public CancellationToken KeepAliveCancellation { get => keepAliveCancellation; }
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
-
-    public ImmutableDictionary<string, string> QueryParts => throw new NotImplementedException();
 
     public static async Task<Message?> Read(Server server, Stream networkStream, CancellationToken cancellation)
     {
@@ -191,6 +189,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
             }
         }
     }
+
+    Func<ImmutableDictionary<string, string>> GetQueryParts { get; } = Memoize(() => MakeQuery(url.SubstringAfter('?')).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase));
 
     static KeyValuePair<string, string> MakeHeader(string headerLine)
         => new(
