@@ -177,14 +177,13 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     static IEnumerable<KeyValuePair<string, string>> MakeQuery(string query)
         => query
-            .SideEffect(n => Console.WriteLine($"Male jetzz {n}"))
             .Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(MakeQueryParam);
 
     static KeyValuePair<string, string> MakeQueryParam(string line)
         => new(
             line.SubstringUntil('='),
-            line.SubstringAfter('=').Trim()
+            Uri.UnescapeDataString(line.SubstringAfter('=').Trim())
         );
 
     const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
