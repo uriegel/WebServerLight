@@ -9,7 +9,7 @@ public interface IRequest
 
     void AddResponseHeader(string key, string value);
 
-    Task SendAsync(Stream payload, int contentLength, string contentType);
+    Task SendAsync(Stream payload, long contentLength, string contentType);
 
     Task<T?> DeserializeAsync<T>();
 

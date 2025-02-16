@@ -2,7 +2,7 @@ using CsTools;
 
 namespace WebServerLight.Streams;
 
-class PayloadStream(Memory<byte> payloadBegin, Stream networkStream, int length) : StreamBase
+class PayloadStream(Memory<byte> payloadBegin, Stream networkStream, long length) : StreamBase
 {
     public override bool CanRead => true;
 
@@ -26,5 +26,5 @@ class PayloadStream(Memory<byte> payloadBegin, Stream networkStream, int length)
             return pos;
     }
 
-    int payloadRead;    
+    long payloadRead;    
 }

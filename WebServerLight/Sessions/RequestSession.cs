@@ -89,6 +89,8 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
+            // TODO set range from Routing
+            msg.UseRange = server.Configuration.useRange;
             return await server.Routes.Probe(msg) switch
             {
                 RouteResult.Keepalive => true,
@@ -117,6 +119,12 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         {
             Error.WriteLine($"{Id} Socket session closed, an error has occurred: {oe}");
             Close(true);
+            return false;
+        }
+        catch (IOException ioe) when (ioe.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset)
+        {
+            Error.WriteLine($"{Id} Socket session reset by peer");
+            Close();
             return false;
         }
         catch (IOException ioe)

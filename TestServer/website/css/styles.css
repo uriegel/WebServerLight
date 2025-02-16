@@ -6,6 +6,10 @@ body:focus-within h1 {
     background-color: chartreuse;
 }
 
+video {
+    width: 400px;
+}
+
 @media (prefers-color-scheme: dark) {
     body {
         background-color: rgb(56, 56, 56);

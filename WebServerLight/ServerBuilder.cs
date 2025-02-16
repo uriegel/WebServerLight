@@ -43,6 +43,9 @@ public class ServerBuilder
     public ServerBuilder AccessControlMaxAge(TimeSpan maxAge)
         => this.SideEffect(_ => AccessControlMaxAgeStr = $"{(int)maxAge.TotalSeconds}");
 
+    public ServerBuilder UseRange()
+        => this.SideEffect(_ => useRange = true);
+
     /// <summary>
     /// Aftern configuring the Builder, call this method for creating a Web Server instance.
     /// </summary>
@@ -58,6 +61,7 @@ public class ServerBuilder
     internal Func<IRequest, Task<bool>>? getRequest;
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
+    internal bool useRange { get; private set; }
 
     ServerBuilder() { }
 

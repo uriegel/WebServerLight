@@ -2,6 +2,7 @@
 
 using WebServerLight;
 using CsTools.Extensions;
+using CsTools;
 
 WriteLine(@"Test site:  http://localhost:8080");
 
@@ -15,6 +16,7 @@ var server =
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))
+        .UseRange()
         .Build();
     
 server.Start();
@@ -28,7 +30,18 @@ async Task<bool> Get(IRequest request)
         var res = Resources.Get("image");
         if (res != null)
         {
-            await request.SendAsync(res, (int)res.Length, MimeTypes.ImageJpeg);
+            await request.SendAsync(res, res.Length, MimeTypes.ImageJpeg);
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (request.Url == "/video")
+    {
+        using var video = File.OpenRead("/daten/Videos/2010.mp4");
+        if (video != null)
+        {
+            await request.SendAsync(video, video.Length, MimeType.Get(video.Name.GetFileExtension() ?? ".txt") ?? MimeTypes.TextPlain);
             return true;
         }
         else
