@@ -127,6 +127,12 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             Close();
             return false;
         }
+        catch (IOException ioe) when (ioe.InnerException is SocketException se && se.SocketErrorCode == SocketError.Shutdown)
+        {
+            Error.WriteLine($"{Id} Socket session shutdown by peer");
+            Close(true);
+            return false;
+        }
         catch (IOException ioe)
         {
             Error.WriteLine($"{Id} Socket session closed: {ioe}");

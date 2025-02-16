@@ -174,42 +174,35 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         var range = RequestHeaders.GetValue("range")?.SubstringAfter("bytes=");
         var parts = range?.Split('-');
         var start = parts != null
-                        ? parts[0].ParseLong() ?? 0 
+                        ? parts[0].ParseLong() ?? 0
                         : 0;
         var end = parts != null
                         ? parts.Length > 1
-                            ? parts[1].ParseLong() ?? length -1
-                            : 0 
-                        : length - start -1;
+                            ? parts[1].ParseLong() ?? length - 1
+                            : 0
+                        : length - start - 1;
         var requestLength = end - start + 1;
+
         AddResponseHeader("Accept-Ranges", "bytes");
         AddResponseHeader("Content-Length", $"{requestLength}");
         AddResponseHeader("Content-Type", contentType);
-
-
-        //AddResponseHeader("Content-Range", $"bytes {start}-{end}/{requestLength}");
-AddResponseHeader("Content-Range", $"bytes {start}-{end}/{length}");
-
-
+        AddResponseHeader("Content-Range", $"bytes {start}-{end}/{length}");
         InitResponseHeaders(true);
         await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 206 Partial Content\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"), keepAliveCancellation);
-     
+
         var bytes = new byte[40000];
-        var readLength = end - start;
         stream.Seek(start, SeekOrigin.Begin);
         long completeRead = 0;
         while (true)
-    	{
-			var read = await stream.ReadAsync(bytes.AsMemory(0, (int)Math.Min(bytes.Length, requestLength - completeRead)), keepAliveCancellation);
-			if (read <1000)
-				break;
-			if (read == 0)
-				break;
-			completeRead += read;
-			await networkStream.WriteAsync(bytes.AsMemory(0, read), keepAliveCancellation);
-			if (completeRead == requestLength)
-				break;
-		}
+        {
+            var read = await stream.ReadAsync(bytes.AsMemory(0, (int)Math.Min(bytes.Length, requestLength - completeRead)), keepAliveCancellation);
+            if (read == 0)
+                break;
+            completeRead += read;
+            await networkStream.WriteAsync(bytes.AsMemory(0, read), keepAliveCancellation);
+            if (completeRead == requestLength)
+                break;
+        }
     }
 
     void InitResponseHeaders(bool payload)
