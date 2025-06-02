@@ -5,11 +5,16 @@ namespace WebServerLight.Routing;
 
 class UpdateRoute() : Route([])
 {
-    public async override ValueTask<RouteResult> Probe(Message msg)
+    internal async override ValueTask<RouteResult> Probe(IRequest msg)
     {
-        var upgrade = msg.RequestHeaders.GetValue("upgrade");
-        return upgrade != null && string.Compare(upgrade, "websocket", true) == 0
-            ? await RouteResult.Detach.SideEffectAsync(async _ => await msg.UpgradeWebSocket())
-            : RouteResult.Next;
+        if (msg is Message message)
+        {
+            var upgrade = message.RequestHeaders.GetValue("upgrade");
+            return upgrade != null && string.Compare(upgrade, "websocket", true) == 0
+                ? await RouteResult.Detach.SideEffectAsync(async _ => await message.UpgradeWebSocket())
+                : RouteResult.Next;
+        }
+        else
+            return RouteResult.Next;
     }
 }

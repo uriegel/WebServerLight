@@ -5,6 +5,9 @@ namespace WebServerLight.Routing;
 
 class RequestRoute(Func<Message, ValueTask<RouteResult>> request) : Route([])
 {
-    public override ValueTask<RouteResult> Probe(Message msg) => request(msg);
+    internal override async ValueTask<RouteResult> Probe(IRequest msg)
+        => msg is Message message
+            ? await request(message)
+            : RouteResult.Next;
 }
 

@@ -32,14 +32,16 @@ class Server(ServerBuilder server) : IServer
             routes.Add(new UpdateRoute());
 
         var postRoute = new List<Route>();
-        if (Configuration.JsonPost != null)
+        if (Configuration.jsonPost != null)
             postRoute.Add(new RequestRoute(Requests.ServePost));
         if (postRoute.Count > 0)
             routes.Add(new MethodRoute(Method.Post, postRoute));
 
         var getRoute = new List<Route>();
-        if (Configuration.getRequest != null)
-            getRoute.Add(new RequestRoute(Requests.ServeGet));
+        foreach (var getRequest in Configuration.GetRequests)
+            getRoute.Add(new RequestRoute(Requests.ServeRequest(getRequest)));
+        foreach (var route in Configuration.GetRoutes)
+            getRoute.Add(route);
         if (Configuration.IsWebsiteFromResource)
             getRoute.Add(new RequestRoute(Requests.ServeResourceWebsite));
         if (getRoute.Count > 0)

@@ -2,13 +2,13 @@ using WebServerLightSessions;
 
 namespace WebServerLight.Routing;
 
-class Route(List<Route> routes)
+public class Route(List<Route> routes)
 {
-    public virtual ValueTask<RouteResult> Probe(Message msg) => ProbeRoutes(msg);
+    internal virtual ValueTask<RouteResult> Probe(IRequest msg) => ProbeRoutes(msg);
 
     public IEnumerable<Route> Routes { get => routes; }
 
-    protected ValueTask<RouteResult> ProbeRoutes(Message msg)
+    protected ValueTask<RouteResult> ProbeRoutes(IRequest msg)
         => Routes
                 .ToAsyncEnumerable()
                 .SelectAwait(async n => await n.Probe(msg))

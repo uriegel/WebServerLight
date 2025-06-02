@@ -1,5 +1,5 @@
 using CsTools.Extensions;
-
+using WebServerLight.Routing;
 using static System.Console;
 
 namespace WebServerLight;
@@ -26,7 +26,10 @@ public class ServerBuilder
         => this.SideEffect(_ => IsWebsiteFromResource = true);
 
     public ServerBuilder Get(Func<IRequest, Task<bool>> request)
-        => this.SideEffect(_ => getRequest = request);
+        => this.SideEffect(_ => GetRequests.Add(request));
+
+    public ServerBuilder Get(Route routes)
+        => this.SideEffect(_ => GetRoutes.Add(routes));
 
     public ServerBuilder JsonPost(Func<IRequest, Task<bool>> request)
         => this.SideEffect(_ => jsonPost = request);
@@ -58,7 +61,8 @@ public class ServerBuilder
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal bool IsWebsiteFromResource { get; private set; }
     internal Func<IRequest, Task<bool>>? jsonPost;
-    internal Func<IRequest, Task<bool>>? getRequest;
+    internal List<Func<IRequest, Task<bool>>> GetRequests { get; } = [];
+    internal List<Route> GetRoutes { get; } = [];
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
     internal bool useRange { get; private set; }

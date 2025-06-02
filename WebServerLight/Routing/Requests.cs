@@ -28,10 +28,15 @@ static class Requests
             return RouteResult.Next;
     }
 
-    public static async ValueTask<RouteResult> ServeGet(Message msg)
-        => await msg.Server.Configuration.getRequest!(msg)
-            ? RouteResult.Keepalive 
-            : RouteResult.Next;
+    public static Func<Message, ValueTask<RouteResult>> ServeRequest(Func<IRequest, Task<bool>> request)
+    {
+        return ServeRequest;
+
+        async ValueTask<RouteResult> ServeRequest(Message msg)
+            => await request(msg)
+                ? RouteResult.Keepalive
+                : RouteResult.Next;
+    }
     
     public async static ValueTask<RouteResult> ServePost(Message msg)
     {

@@ -3,6 +3,7 @@
 using WebServerLight;
 using CsTools.Extensions;
 using CsTools;
+using WebServerLight.Routing;
 
 WriteLine(@"Test site:  http://localhost:8080");
 
@@ -12,6 +13,9 @@ var server =
         .Http(8080)
         .WebsiteFromResource()
         .Get(Get)
+        .Get(SubpathRoute
+                .New("/media")
+                .Request(GetMediaVideo)) // TODO subPathRequest
         .JsonPost(JsonPost)
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
@@ -22,6 +26,18 @@ var server =
 server.Start();
 ReadLine();
 server.Stop();
+
+async Task<bool> GetMediaVideo(IRequest request)
+{
+    using var video = File.OpenRead("/daten/Videos/2010.mp4");
+    if (video != null)
+    {
+        await request.SendAsync(video, video.Length, MimeType.Get(".mp4") ?? MimeTypes.TextPlain);
+        return true;
+    }
+    else
+        return false;
+}
 
 async Task<bool> Get(IRequest request)
 {

@@ -2,8 +2,8 @@ namespace WebServerLightSessions;
 
 public enum RouteResult
 {
+    Next,
     Keepalive,
     Close,
-    Next,
     Detach
 }
