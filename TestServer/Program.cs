@@ -1,9 +1,9 @@
-﻿using static System.Console;
-
-using WebServerLight;
+﻿using CsTools;
 using CsTools.Extensions;
-using CsTools;
+using WebServerLight;
 using WebServerLight.Routing;
+
+using static System.Console;
 
 WriteLine(@"Test site:  http://localhost:8080");
 
@@ -12,7 +12,9 @@ var server =
         .New()
         .Http(8080)
         .WebsiteFromResource()
-        .Get(Get)
+        .Route(MethodRoute
+                .New(Method.Get)
+                .Request(Get))
         .Route(SubpathRoute
                 .New("/media")
                 .Add(MethodRoute
