@@ -40,12 +40,18 @@ class Server(ServerBuilder server) : IServer
         var getRoute = new List<Route>();
         foreach (var getRequest in Configuration.GetRequests)
             getRoute.Add(new RequestRoute(Requests.ServeRequest(getRequest)));
-        foreach (var route in Configuration.GetRoutes)
+        foreach (var route in Configuration.Routes)
             getRoute.Add(route);
         if (Configuration.IsWebsiteFromResource)
             getRoute.Add(new RequestRoute(Requests.ServeResourceWebsite));
         if (getRoute.Count > 0)
             routes.Add(new MethodRoute(Method.Get, getRoute));
+
+        var routeList = new List<Route>();
+        foreach (var route in Configuration.Routes)
+            routeList.Add(route);
+        if (routeList.Count > 0)
+            routes.AddRange(routeList);
 
         routes.Add(new RequestRoute(Requests.Send404));
         Routes = new Route(routes);

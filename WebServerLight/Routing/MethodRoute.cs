@@ -3,9 +3,11 @@ using WebServerLightSessions;
 
 namespace WebServerLight.Routing;
 
-class MethodRoute(Method method, List<Route> routes) : Route(routes)
+public class MethodRoute(Method method, List<Route> routes) : Route(routes)
 {
-    public MethodRoute(Method method) : this(method, []) { }
+    public static MethodRoute New(Method method) => new(method);
+    MethodRoute(Method method) : this(method, []) { }
+
     internal override async ValueTask<RouteResult> Probe(IRequest msg)
         => msg is Message message && message.Method == method
             ? await ProbeRoutes(msg)

@@ -13,9 +13,11 @@ var server =
         .Http(8080)
         .WebsiteFromResource()
         .Get(Get)
-        .Get(SubpathRoute
+        .Route(SubpathRoute
                 .New("/media")
-                .Request(GetMediaVideo)) // TODO subPathRequest
+                .Add(MethodRoute
+                    .New(Method.Get)
+                    .Request(GetMediaVideo))) // TODO subPathRequest
         .JsonPost(JsonPost)
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")

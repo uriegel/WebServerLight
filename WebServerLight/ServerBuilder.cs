@@ -28,8 +28,8 @@ public class ServerBuilder
     public ServerBuilder Get(Func<IRequest, Task<bool>> request)
         => this.SideEffect(_ => GetRequests.Add(request));
 
-    public ServerBuilder Get(Route routes)
-        => this.SideEffect(_ => GetRoutes.Add(routes));
+    public ServerBuilder Route(Route route)
+        => this.SideEffect(_ => Routes.Add(route));
 
     public ServerBuilder JsonPost(Func<IRequest, Task<bool>> request)
         => this.SideEffect(_ => jsonPost = request);
@@ -50,7 +50,7 @@ public class ServerBuilder
         => this.SideEffect(_ => useRange = true);
 
     /// <summary>
-    /// Aftern configuring the Builder, call this method for creating a Web Server instance.
+    /// After configuring the Builder, call this method for creating a Web Server instance.
     /// </summary>
     /// <returns></returns>
     public IServer Build()
@@ -62,7 +62,7 @@ public class ServerBuilder
     internal bool IsWebsiteFromResource { get; private set; }
     internal Func<IRequest, Task<bool>>? jsonPost;
     internal List<Func<IRequest, Task<bool>>> GetRequests { get; } = [];
-    internal List<Route> GetRoutes { get; } = [];
+    internal List<Route> Routes { get; } = [];
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
     internal bool useRange { get; private set; }
