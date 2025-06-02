@@ -25,6 +25,7 @@ var server =
                 .Add(MethodRoute
                     .New(Method.Get)
                     .Request(GetMediaVideo))) // TODO subPathRequest
+        // TODO PathRoute and SubpathRoute
         // TODO Json and MethodRequest and Subpath
         .JsonPost(JsonPost)
         .WebSocket(WebSocket)
