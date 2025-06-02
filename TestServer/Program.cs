@@ -14,12 +14,18 @@ var server =
         .WebsiteFromResource()
         .Route(MethodRoute
                 .New(Method.Get)
-                .Request(Get))
+                .Add(SubpathRoute
+                        .New("/image")
+                        .Request(GetImage))
+                .Add(SubpathRoute
+                        .New("/video")
+                        .Request(GetVideo)))
         .Route(SubpathRoute
                 .New("/media")
                 .Add(MethodRoute
                     .New(Method.Get)
                     .Request(GetMediaVideo))) // TODO subPathRequest
+        // TODO Json and MethodRequest and Subpath
         .JsonPost(JsonPost)
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
@@ -43,29 +49,25 @@ async Task<bool> GetMediaVideo(IRequest request)
         return false;
 }
 
-async Task<bool> Get(IRequest request)
+async Task<bool> GetImage(IRequest request)
 {
-    if (request.Url == "/image")
+    var res = Resources.Get("image");
+    if (res != null)
     {
-        var res = Resources.Get("image");
-        if (res != null)
-        {
-            await request.SendAsync(res, res.Length, MimeTypes.ImageJpeg);
-            return true;
-        }
-        else
-            return false;
+        await request.SendAsync(res, res.Length, MimeTypes.ImageJpeg);
+        return true;
     }
-    else if (request.Url == "/video")
+    else
+        return false;
+}
+
+async Task<bool> GetVideo(IRequest request)
+{
+    using var video = File.OpenRead("/daten/Videos/2010.mp4");
+    if (video != null)
     {
-        using var video = File.OpenRead("/daten/Videos/2010.mp4");
-        if (video != null)
-        {
-            await request.SendAsync(video, video.Length, MimeType.Get(video.Name.GetFileExtension() ?? ".txt") ?? MimeTypes.TextPlain);
-            return true;
-        }
-        else
-            return false;
+        await request.SendAsync(video, video.Length, MimeType.Get(video.Name.GetFileExtension() ?? ".txt") ?? MimeTypes.TextPlain);
+        return true;
     }
     else
         return false;
