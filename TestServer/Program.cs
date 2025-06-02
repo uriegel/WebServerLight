@@ -34,7 +34,7 @@ var server =
                     .New(Method.Get)
                     .Request(GetMediaVideo)))
 
-        // TODO PathRoute and SubpathRoute
+        // TODO PathRoute and SubpathRoute (save subPath in IRequest)
         // TODO HostPath (illmatic)
         // TODO JsonPost
         .WebSocket(WebSocket)
