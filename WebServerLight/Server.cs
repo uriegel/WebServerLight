@@ -38,8 +38,6 @@ class Server(ServerBuilder server) : IServer
             routes.Add(new MethodRoute(Method.Post, postRoute));
 
         var getRoute = new List<Route>();
-        foreach (var getRequest in Configuration.GetRequests)
-            getRoute.Add(new RequestRoute(Requests.ServeRequest(getRequest)));
         foreach (var route in Configuration.Routes)
             getRoute.Add(route);
         if (Configuration.IsWebsiteFromResource)

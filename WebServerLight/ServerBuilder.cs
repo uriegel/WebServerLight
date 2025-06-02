@@ -25,9 +25,6 @@ public class ServerBuilder
     public ServerBuilder WebsiteFromResource()
         => this.SideEffect(_ => IsWebsiteFromResource = true);
 
-    public ServerBuilder Get(Func<IRequest, Task<bool>> request)
-        => this.SideEffect(_ => GetRequests.Add(request));
-
     public ServerBuilder Route(Route route)
         => this.SideEffect(_ => Routes.Add(route));
 
@@ -61,7 +58,6 @@ public class ServerBuilder
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal bool IsWebsiteFromResource { get; private set; }
     internal Func<IRequest, Task<bool>>? jsonPost;
-    internal List<Func<IRequest, Task<bool>>> GetRequests { get; } = [];
     internal List<Route> Routes { get; } = [];
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
