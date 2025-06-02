@@ -38,20 +38,6 @@ static class Requests
                 : RouteResult.Next;
     }
     
-    public async static ValueTask<RouteResult> ServePost(Message msg)
-    {
-        var url = msg.Url;
-        var length = msg.RequestHeaders.GetValue("Content-Length")?.ParseInt();
-        if (length.HasValue && msg.Payload != null)
-        {
-            return await msg.Server.Configuration.jsonPost!(msg)
-                ? RouteResult.Keepalive 
-                : RouteResult.Next;
-        }
-        else
-            return RouteResult.Next;
-    }
-
     public static async ValueTask<RouteResult> ServeOptions(Message msg)
     {
         var request = msg.RequestHeaders.GetValue("Access-Control-Request-Headers");

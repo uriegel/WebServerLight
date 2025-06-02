@@ -31,12 +31,6 @@ class Server(ServerBuilder server) : IServer
         if (Configuration.onWebSocket != null)
             routes.Add(new UpdateRoute());
 
-        var postRoute = new List<Route>();
-        if (Configuration.jsonPost != null)
-            postRoute.Add(new RequestRoute(Requests.ServePost));
-        if (postRoute.Count > 0)
-            routes.Add(new MethodRoute(Method.Post, postRoute));
-
         var getRoute = new List<Route>();
         foreach (var route in Configuration.Routes)
             getRoute.Add(route);

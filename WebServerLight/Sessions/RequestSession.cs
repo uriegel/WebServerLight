@@ -90,7 +90,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         try
         {
             // TODO set range from Routing
-            msg.UseRange = server.Configuration.useRange;
+            msg.UseRange = server.Configuration.UseRangeValue;
             return await server.Routes.Probe(msg) switch
             {
                 RouteResult.Keepalive => true,

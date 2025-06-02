@@ -20,14 +20,22 @@ var server =
                 .Add(SubpathRoute
                         .New("/video")
                         .Request(GetVideo)))
+        .Route(MethodRoute
+                .New(Method.Post)
+                .Add(SubpathRoute
+                        .New("/json/cmd4")
+                        .Request(JsonPost4))
+                .Add(SubpathRoute
+                        .New("/json")
+                        .Request(JsonPost)))
         .Route(SubpathRoute
                 .New("/media")
                 .Add(MethodRoute
                     .New(Method.Get)
-                    .Request(GetMediaVideo))) // TODO subPathRequest
+                    .Request(GetMediaVideo)))
+
         // TODO PathRoute and SubpathRoute
-        // TODO Json and MethodRequest and Subpath
-        .JsonPost(JsonPost)
+        // TODO JsonPost
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))
@@ -74,28 +82,27 @@ async Task<bool> GetVideo(IRequest request)
         return false;
 }
 
-async Task<bool> JsonPost(IRequest request)
+async Task<bool> JsonPost4(IRequest request)
 {
-    if (request.Url == "/json/cmd4")
-    {
-        var response = new Response([
-            new Contact("Uwe Riegel", 34),
-            new Contact("Miles Davis", 90),
-            new Contact("John Coltrane", 99)], 123, "Response without input");
-        await request.SendJsonAsync(response);
-    }
-    else
-    {
-        var data = await request.DeserializeAsync<Data>();
-        var response = new Response([
-            new Contact("Uwe Riegel", 34),
-            new Contact("Miles Davis", 90),
-            new Contact("John Coltrane", 99)], 123, request.Url);
-
-        await request.SendJsonAsync(response);
-    }
+    var response = new Response([
+        new Contact("Uwe Riegel", 34),
+        new Contact("Miles Davis", 90),
+        new Contact("John Coltrane", 99)], 123, "Response without input");
+    await request.SendJsonAsync(response);
     return true;
 } 
+
+async Task<bool> JsonPost(IRequest request)
+{
+    var data = await request.DeserializeAsync<Data>();
+    var response = new Response([
+        new Contact("Uwe Riegel", 34),
+        new Contact("Miles Davis", 90),
+        new Contact("John Coltrane", 99)], 123, request.Url);
+
+    await request.SendJsonAsync(response);
+    return true;
+}
 
 async void WebSocket(IWebSocket webSocket)
 {
