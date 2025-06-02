@@ -5,6 +5,9 @@ namespace WebServerLight;
 public interface IRequest
 {
     string Url { get; }
+
+    string? SubPath { get; }
+
     ImmutableDictionary<string, string> QueryParts { get; }
 
     void AddResponseHeader(string key, string value);

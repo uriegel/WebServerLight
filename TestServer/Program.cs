@@ -14,27 +14,26 @@ var server =
         .WebsiteFromResource()
         .Route(MethodRoute
                 .New(Method.Get)
-                .Add(SubpathRoute
+                .Add(PathRoute
                         .New("/image")
                         .Request(GetImage))
-                .Add(SubpathRoute
+                .Add(PathRoute
                         .New("/video")
                         .Request(GetVideo)))
         .Route(MethodRoute
                 .New(Method.Post)
-                .Add(SubpathRoute
+                .Add(PathRoute
                         .New("/json/cmd4")
                         .Request(JsonPost4))
-                .Add(SubpathRoute
+                .Add(PathRoute
                         .New("/json")
                         .Request(JsonPost)))
-        .Route(SubpathRoute
+        .Route(PathRoute
                 .New("/media")
                 .Add(MethodRoute
                     .New(Method.Get)
                     .Request(GetMediaVideo)))
 
-        // TODO PathRoute and SubpathRoute (save subPath in IRequest)
         // TODO HostPath (illmatic)
         // TODO JsonPost
         .WebSocket(WebSocket)
@@ -49,6 +48,7 @@ server.Stop();
 
 async Task<bool> GetMediaVideo(IRequest request)
 {
+    WriteLine($"Subpath: {request.SubPath}");
     using var video = File.OpenRead("/daten/Videos/2010.mp4");
     if (video != null)
     {

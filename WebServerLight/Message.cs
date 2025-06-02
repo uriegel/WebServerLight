@@ -19,6 +19,17 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     public string Url { get => _Url ??= url.SubstringUntil('?'); }
     string? _Url;
 
+    public string? SubPath
+    {
+        get
+        {
+            if (_SubPath == null && requestPath != null)
+                _SubPath = Url[requestPath.Length..].Trim('/');
+            return _SubPath;
+        }
+    }
+    string? _SubPath;
+
     public PayloadStream? Payload { get => _Payload ??= GetPayload(); }
     PayloadStream? _Payload;
 
@@ -119,6 +130,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         ms.Position = 0;
         await SendStream(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
     }
+
+    public void SetRequestPath(string path) => requestPath = path;
 
     public async Task SendOnlyHeaders(int code = 204, string status = "204 No Content")
     {
@@ -251,6 +264,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
             line.SubstringUntil('='),
             Uri.UnescapeDataString(line.SubstringAfter('=').Trim())
         );
+
+    string? requestPath;
 
     const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 }
