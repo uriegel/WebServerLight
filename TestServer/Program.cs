@@ -35,6 +35,7 @@ var server =
                     .Request(GetMediaVideo)))
 
         // TODO PathRoute and SubpathRoute
+        // TODO HostPath (illmatic)
         // TODO JsonPost
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
