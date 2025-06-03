@@ -70,8 +70,6 @@ async Task<bool> GetMediaFile(IRequest request)
     if (request.SubPath?.Contains('.') != true || !File.Exists(path))
         return false;
     WriteLine($"GetMediaFile: {path}, {File.Exists(path)}");
-
-
     using var video = File.OpenRead(path);
     if (video != null)
     {
