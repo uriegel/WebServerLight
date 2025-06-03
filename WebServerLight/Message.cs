@@ -16,7 +16,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 {
     public Method Method { get => method; }
 
-    public string Url { get => _Url ??= url.SubstringUntil('?'); }
+    public string Url { get => _Url ??= Uri.UnescapeDataString(url.SubstringUntil('?')); }
     string? _Url;
 
     public string? SubPath

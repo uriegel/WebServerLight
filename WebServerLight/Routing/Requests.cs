@@ -31,11 +31,21 @@ static class Requests
     public static Func<Message, ValueTask<RouteResult>> ServeRequest(Func<IRequest, Task<bool>> request)
     {
         return ServeRequest;
-
+        
         async ValueTask<RouteResult> ServeRequest(Message msg)
-            => await request(msg)
-                ? RouteResult.Keepalive
-                : RouteResult.Next;
+        {
+            try
+            {
+                return await request(msg)
+                    ? RouteResult.Keepalive
+                    : RouteResult.Next;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ServerRequest failed: {e}");
+                return RouteResult.Next;
+            }
+        }
     }
     
     public static async ValueTask<RouteResult> ServeOptions(Message msg)
