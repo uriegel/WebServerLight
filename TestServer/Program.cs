@@ -32,8 +32,8 @@ var server =
                 .New("/media")
                 .Add(MethodRoute
                     .New(Method.Get)
-                    .Request(GetMedia)
-                    .Request(GetMediaFile)))
+                    .Request(GetMediaFile)
+                    .Request(GetMedia)))
 
         // TODO HostPath (illmatic)
         // TODO JsonPost
