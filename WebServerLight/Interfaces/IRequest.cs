@@ -11,8 +11,8 @@ public interface IRequest
     ImmutableDictionary<string, string> QueryParts { get; }
 
     void AddResponseHeader(string key, string value);
-
     Task SendAsync(Stream payload, long contentLength, string contentType);
+    Task SendText(string body);
 
     Task<T?> DeserializeAsync<T>();
 

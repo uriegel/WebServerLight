@@ -43,6 +43,9 @@ public class ServerBuilder
     public ServerBuilder UseRange()
         => this.SideEffect(_ => UseRangeValue = true);
 
+    public ServerBuilder UseLetsEncrypt()
+        => this.SideEffect(_ => LetsEncrypt = true);
+
     /// <summary>
     /// After configuring the Builder, call this method for creating a Web Server instance.
     /// </summary>
@@ -58,6 +61,7 @@ public class ServerBuilder
     internal Action<IWebSocket>? onWebSocket;
     internal string? AccessControlMaxAgeStr { get; private set; }
     internal bool UseRangeValue { get; private set; }
+    internal bool LetsEncrypt { get; private set; }
 
     ServerBuilder() { }
 

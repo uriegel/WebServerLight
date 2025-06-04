@@ -12,6 +12,7 @@ var server =
         .New()
         .Http(8080)
         .WebsiteFromResource()
+        .UseLetsEncrypt()
         .Route(MethodRoute
                 .New(Method.Get)
                 .Add(PathRoute

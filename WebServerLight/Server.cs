@@ -45,6 +45,9 @@ class Server(ServerBuilder server) : IServer
         if (routeList.Count > 0)
             routes.AddRange(routeList);
 
+        if (Configuration.LetsEncrypt)
+            routes.Add(new LetsEncryptRoute());
+
         routes.Add(new RequestRoute(Requests.Send404));
         Routes = new Route(routes);
 

@@ -16,7 +16,14 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 {
     public Method Method { get => method; }
 
-    public string Url { get => _Url ??= Uri.UnescapeDataString(url.SubstringUntil('?')); }
+    public string Url
+    {
+        get 
+        {
+            _Url ??= Uri.UnescapeDataString(url.SubstringUntil('?'));
+            return _Url;
+        }
+    }
     string? _Url;
 
     public string? SubPath
@@ -106,12 +113,12 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         }
     }
 
-    public async ValueTask<bool> Send(string body, CancellationToken keepAliveCancellation)
+    public async Task SendText(string body)
     {
-        InitResponseHeaders(true);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
-        return true;
-    }
+        AddResponseHeader("Content-Length", $"{body.Length}");
+        AddResponseHeader("Content-Type", MimeTypes.TextPlain);
+        await Send(body, KeepAliveCancellation);
+    } 
 
     public async Task SendAsync(Stream payload, long contentLength, string contentType)
         => await SendStream(payload, contentType, contentLength, KeepAliveCancellation);
@@ -122,6 +129,13 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         => Payload != null
             ? await JsonSerializer.DeserializeAsync<T>(Payload, Json.Defaults, KeepAliveCancellation)
             : default;
+
+    public async ValueTask<bool> Send(string body, CancellationToken keepAliveCancellation)
+    {
+        InitResponseHeaders(true);
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
+        return true;
+    }
 
     public async Task SendJsonAsync<T>(T t)
     {
