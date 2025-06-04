@@ -11,14 +11,17 @@ using static CsTools.Functional.Memoization;
 
 namespace WebServerLight;
 
-class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream, Memory<byte> payloadBegin, CancellationToken keepAliveCancellation)
+class Message(Server server, Method method, string url, ImmutableDictionary<string, string> requestHeaders, Stream networkStream,
+                Memory<byte> payloadBegin, bool isSecured, CancellationToken keepAliveCancellation)
     : IRequest
 {
     public Method Method { get => method; }
+    
+    public bool IsSecured { get => isSecured; }
 
     public string Url
     {
-        get 
+        get
         {
             _Url ??= Uri.UnescapeDataString(url.SubstringUntil('?'));
             return _Url;
@@ -58,7 +61,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     public Dictionary<string, string> ResponseHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public static async Task<Message?> Read(Server server, Stream networkStream, CancellationToken cancellation)
+    public static async Task<Message?> Read(Server server, Stream networkStream, bool isSecured, CancellationToken cancellation)
     {
         var buffer = new byte[8192];
         int bytesRead = 0;
@@ -92,7 +95,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
                 var url = parts[0].StringBetween(" ", " ");
                 var requestHeaders = parts.Skip(1).Select(MakeHeader).ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
 
-                return new Message(server, method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex), cancellation);
+                return new Message(server, method, url, requestHeaders, networkStream, new Memory<byte>(buffer, headerEndIndex, totalBytes - headerEndIndex), isSecured, cancellation);
             }
         }
         return null;

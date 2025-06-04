@@ -57,25 +57,17 @@ class Server(ServerBuilder server) : IServer
             listener.Start();
             WriteLine("HTTP listener started");
         }
-        // if (tlsListener != null)
-        // {
-        //     WriteLine("Starting HTTPS listener...");
-        //     tlsListener.Start();
-        //     WriteLine("HTTPS listener started");
-        // }
-        // if (tlsRedirectorListener != null)
-        // {
-        //     WriteLine("Starting HTTP redirection listener...");
-        //     tlsRedirectorListener.Start();
-        //     WriteLine("HTTPS redirection listener started");
-        // }
+        if (tlsListener != null)
+        {
+            WriteLine("Starting HTTPS listener...");
+            tlsListener.Start();
+            WriteLine("HTTPS listener started");
+        }
         IsStarted = true;
         if (listener != null)
             StartConnecting(listener, false);
-        // if (tlsListener != null)
-        //     StartConnecting(tlsListener, true);
-        // if (tlsRedirectorListener != null)
-        //     StartConnecting(tlsRedirectorListener, true);
+        if (tlsListener != null)
+            StartConnecting(tlsListener, true);
 
         WriteLine("Started");
     }
@@ -90,18 +82,12 @@ class Server(ServerBuilder server) : IServer
             WriteLine("HTTP listener stopped");
         }
 
-        // if (tlsListener != null)
-        // {
-        //     WriteLine("Stopping HTTPS listener...");
-        //     tlsListener.Stop();
-        //     WriteLine("HTTPS listener stopped");
-        // }
-        // if (tlsRedirectorListener != null)
-        // {
-        //     WriteLine("Stopping HTTPS redirection listener...");
-        //     tlsRedirectorListener.Stop();
-        //     WriteLine("HTTPS redirection listener stopped");
-        // }
+        if (tlsListener != null)
+        {
+            WriteLine("Stopping HTTPS listener...");
+            tlsListener.Stop();
+            WriteLine("HTTPS listener stopped");
+        }
         WriteLine("Stopped");
     }
 
@@ -158,7 +144,6 @@ class Server(ServerBuilder server) : IServer
     }
 
     readonly TcpListener? listener = server.HttpPort.HasValue ? DualModeTcpListener.Create(server.HttpPort.Value).Listener : null;
-    // readonly TcpListener? tlsListener;
-    // readonly TcpListener? tlsRedirectorListener;
+    readonly TcpListener? tlsListener = server.HttpsPort.HasValue ? DualModeTcpListener.Create(server.HttpsPort.Value).Listener : null;
 }
  

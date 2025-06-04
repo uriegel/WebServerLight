@@ -4,6 +4,7 @@ namespace WebServerLight;
 
 public interface IRequest
 {
+    bool IsSecured { get; }
     string Url { get; }
 
     string? SubPath { get; }

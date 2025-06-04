@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using WebServerLightSessions;
 using static System.Console;
 
@@ -35,7 +36,7 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
 
                 if (shutdown)
                     break;
-                var session = new RequestSession(server, this, networkStream!, startTime);
+                var session = new RequestSession(server, this, networkStream!, startTime, isSecured);
                 if (!await session.StartAsync())
                     break;
             }
@@ -70,20 +71,17 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
         if (!isSecured)
             return null;
 
-        // TODO 
-        await Task.Delay(20000);
-
         var sslStream = new SslStream(stream);
         // if (server.Configuration.AllowRenegotiation)
         //     await sslStream.AuthenticateAsServerAsync(server.Configuration.Certificate!, false, server.Configuration.TlsProtocols, server.Configuration.CheckRevocation);
         // else
-        //     await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions()
-        //     {
-        //         AllowRenegotiation = false,
-        //         EnabledSslProtocols = server.Configuration.TlsProtocols,
-        //         ServerCertificate = server.Configuration.Certificate,
-        //         CertificateRevocationCheckMode = X509RevocationMode.Offline
-        //     });
+            await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions()
+            {
+                AllowRenegotiation = false,
+                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,   // server.Configuration.TlsProtocols,
+                // TODO ServerCertificate = server.Configuration.Certificate,
+                CertificateRevocationCheckMode = X509RevocationMode.Offline
+            });
 
         string GetKeyExchangeAlgorithm(SslStream n) => (int)n.KeyExchangeAlgorithm == 44550 ? "ECDHE" : $"{n.KeyExchangeAlgorithm}";
         string GetHashAlgorithm(SslStream n)

@@ -18,6 +18,9 @@ public class ServerBuilder
     public ServerBuilder Http(int port = 80)
         => this.SideEffect(_ => HttpPort = port.SideEffect(p => WriteLine($"Using HTTP port {p}")));
 
+    public ServerBuilder Https(int port = 443)
+        => this.SideEffect(_ => HttpsPort = port.SideEffect(p => WriteLine($"Using HTTPS port {p}")));
+
     /// <summary>
     /// Host website, the files are included as .NET resource. The files are included in the executing Assembly
     /// </summary>
@@ -55,6 +58,7 @@ public class ServerBuilder
 
     internal IReadOnlyList<string> AllowedOrigins { get => allowedOrigins; }    
     internal int? HttpPort { get; private set; }
+    internal int? HttpsPort { get; private set; }
     internal int SocketLifetime { get; private set; } = 3 * 60_000;
     internal bool IsWebsiteFromResource { get; private set; }
     internal List<Route> Routes { get; } = [];

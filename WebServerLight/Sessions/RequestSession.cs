@@ -10,7 +10,7 @@ using static System.Console;
 
 namespace WebServerLightSessions;
 
-class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime)
+class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime, bool isSecured)
 {
     public DateTime? StartTime { get; } = startTime ?? DateTime.Now;
     public string Id
@@ -27,7 +27,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     {
         try
         {
-            var msg = await Message.Read(server, networkStream, keepAliveCancellation);
+            var msg = await Message.Read(server, networkStream, isSecured, keepAliveCancellation);
             stopwatch.Start();
             if (msg != null)
             {
