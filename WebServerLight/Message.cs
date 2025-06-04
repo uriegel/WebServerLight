@@ -117,7 +117,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     {
         AddResponseHeader("Content-Length", $"{body.Length}");
         AddResponseHeader("Content-Type", MimeTypes.TextPlain);
-        await Send(body, KeepAliveCancellation);
+        await Send(body, 200, "OK", KeepAliveCancellation);
     } 
 
     public async Task SendAsync(Stream payload, long contentLength, string contentType)
@@ -130,10 +130,10 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
             ? await JsonSerializer.DeserializeAsync<T>(Payload, Json.Defaults, KeepAliveCancellation)
             : default;
 
-    public async ValueTask<bool> Send(string body, CancellationToken keepAliveCancellation)
+    public async ValueTask<bool> Send(string body, int statusCode, string status, CancellationToken keepAliveCancellation)
     {
         InitResponseHeaders(true);
-        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 404 Not Found\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 {statusCode} {status}\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n{body}"), keepAliveCancellation);
         return true;
     }
 

@@ -10,7 +10,7 @@ static class Requests
         var body = "I can't find what you're looking for...";
         msg.AddResponseHeader("Content-Length", $"{body.Length}");
         msg.AddResponseHeader("Content-Type", MimeTypes.TextPlain);
-        await msg.Send(body, msg.KeepAliveCancellation);
+        await msg.Send(body, 404, "Not Found", msg.KeepAliveCancellation);
         return RouteResult.Keepalive;
     }
 
