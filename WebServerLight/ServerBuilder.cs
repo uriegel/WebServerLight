@@ -1,5 +1,7 @@
+using System.Security.Cryptography.X509Certificates;
 using CsTools.Extensions;
 using WebServerLight.Routing;
+
 using static System.Console;
 
 namespace WebServerLight;
@@ -20,6 +22,21 @@ public class ServerBuilder
 
     public ServerBuilder Https(int port = 443)
         => this.SideEffect(_ => HttpsPort = port.SideEffect(p => WriteLine($"Using HTTPS port {p}")));
+
+    /// <summary>
+    /// Certificate necessary for HTTPS. Alternatively you could call UseLetsEncrypt() and let LetsEncrypt do all the work
+    /// </summary>
+    /// <param name="certificate"></param>
+    /// <returns></returns>
+    public ServerBuilder HttpsCertificate(X509Certificate2 certificate)
+        => this.SideEffect(_ => Certificate = certificate);
+
+    /// <summary>
+    /// Automatically uses Let's Encrypt certificate. The .NET tool "LetsEncryptCert" is necessary and works with ths Web Server.
+    /// </summary>
+    /// <returns></returns>
+    public ServerBuilder UseLetsEncrypt()
+        => this.SideEffect(_ => LetsEncrypt = true);
 
     /// <summary>
     /// Host website, the files are included as .NET resource. The files are included in the executing Assembly
@@ -46,9 +63,6 @@ public class ServerBuilder
     public ServerBuilder UseRange()
         => this.SideEffect(_ => UseRangeValue = true);
 
-    public ServerBuilder UseLetsEncrypt()
-        => this.SideEffect(_ => LetsEncrypt = true);
-
     /// <summary>
     /// After configuring the Builder, call this method for creating a Web Server instance.
     /// </summary>
@@ -66,7 +80,9 @@ public class ServerBuilder
     internal string? AccessControlMaxAgeStr { get; private set; }
     internal bool UseRangeValue { get; private set; }
     internal bool LetsEncrypt { get; private set; }
-
+    internal X509Certificate2? Certificate { get; private set; }
+    internal bool AllowRenegotiation { get; private set; }
+    
     ServerBuilder() { }
 
     readonly List<string> allowedOrigins = [];

@@ -11,6 +11,7 @@ var server =
     ServerBuilder
         .New()
         .Http(8080)
+        .Https(4433)
         .WebsiteFromResource()
         .UseLetsEncrypt()
         .Route(MethodRoute

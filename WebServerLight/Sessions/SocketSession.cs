@@ -1,9 +1,8 @@
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using WebServerLightSessions;
+
 using static System.Console;
 
 namespace WebServerLight.Sessions;
@@ -30,7 +29,7 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
                 DateTime? startTime = null;
                 if (networkStream == null)
                 {
-                    networkStream = isSecured ? await GetTlsNetworkStreamAsync(TcpClient) : TcpClient.GetStream();
+                    networkStream = isSecured ? await TcpClient.GetTlsNetworkStreamAsync(Id, server.Configuration) : TcpClient.GetStream();
                     startTime = ConnectTime;
                 }
 
@@ -64,39 +63,6 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
     public void Close() => TcpClient.Close();
 
     public static void Shutdown() => shutdown = true;
-
-    async Task<Stream?> GetTlsNetworkStreamAsync(TcpClient tcpClient)
-    {
-        var stream = tcpClient.GetStream();
-        if (!isSecured)
-            return null;
-
-        var sslStream = new SslStream(stream);
-        // if (server.Configuration.AllowRenegotiation)
-        //     await sslStream.AuthenticateAsServerAsync(server.Configuration.Certificate!, false, server.Configuration.TlsProtocols, server.Configuration.CheckRevocation);
-        // else
-            await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions()
-            {
-                AllowRenegotiation = false,
-                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,   // server.Configuration.TlsProtocols,
-                // TODO ServerCertificate = server.Configuration.Certificate,
-                CertificateRevocationCheckMode = X509RevocationMode.Offline
-            });
-
-        string GetKeyExchangeAlgorithm(SslStream n) => (int)n.KeyExchangeAlgorithm == 44550 ? "ECDHE" : $"{n.KeyExchangeAlgorithm}";
-        string GetHashAlgorithm(SslStream n)
-        {
-            return (int)n.HashAlgorithm switch
-            {
-                32781 => "SHA384",
-                32780 => "SHA256",
-                _ => $"{n.HashAlgorithm}",
-            };
-        }
-        WriteLine($"{Id}- Secure protocol: {sslStream.SslProtocol}, Cipher: {sslStream.CipherAlgorithm} strength {sslStream.CipherStrength}, Key exchange: {GetKeyExchangeAlgorithm(sslStream)} strength {sslStream.KeyExchangeStrength}, Hash: {GetHashAlgorithm(sslStream)} strength {sslStream.HashStrength}");
-
-        return sslStream;
-    }
 
     static int seedId;
     static bool shutdown;
