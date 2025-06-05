@@ -30,12 +30,14 @@ var server =
                 .Add(PathRoute
                         .New("/json")
                         .Request(JsonPost)))
-        .Route(PathRoute
-                .New("/media")
-                .Add(MethodRoute
-                    .New(Method.Get)
-                    .Request(GetMediaFile)
-                    .Request(GetMedia)))
+        .Route(HttpRoute
+                .New()
+                .Add(PathRoute
+                    .New("/media")
+                    .Add(MethodRoute
+                        .New(Method.Get)
+                        .Request(GetMediaFile)
+                        .Request(GetMedia))))
 
         // TODO HostPath (illmatic)
         // TODO JsonPost
