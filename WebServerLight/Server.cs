@@ -7,16 +7,25 @@ using static System.Console;
 
 namespace WebServerLight;
 
-class Server(ServerBuilder server) : IServer
+class Server(WebServer server) : IServer
 {
+    /// <summary>
+    /// Is this Web Server started
+    /// </summary>
     public bool IsStarted { get; private set; }
 
-    public ServerBuilder Configuration { get => server; }
+    /// <summary>
+    /// Web Server's configuration
+    /// </summary>
+    public WebServer Configuration { get => server; }
 
     public int SocketLifetime { get => server.SocketLifetime; }
 
     public Route Routes { get; private set; } = new Route([]);
 
+    /// <summary>
+    /// Starts the Web Server
+    /// </summary>
     public void Start()
     {
         WriteLine("Starting...");
@@ -72,6 +81,9 @@ class Server(ServerBuilder server) : IServer
         WriteLine("Started");
     }
 
+    /// <summary>
+    /// Stops the Web Server
+    /// </summary>
     public void Stop()
     {
         WriteLine("Stopping...");

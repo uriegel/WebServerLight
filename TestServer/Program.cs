@@ -8,7 +8,7 @@ using static System.Console;
 WriteLine(@"Test site:  http://localhost:8080");
 
 var server =
-    ServerBuilder
+    WebServer
         .New()
         .Http(8080)
         .Https(4433)
@@ -39,6 +39,7 @@ var server =
                         .Request(GetMediaFile)
                         .Request(GetMedia))))
 
+        // TODO ServerName
         // TODO HostPath (illmatic)
         // TODO JsonPost
         .WebSocket(WebSocket)

@@ -9,18 +9,28 @@ namespace WebServerLight;
 /// <summary>
 /// Builder pattern for fluently creating the Web Server
 /// </summary>
-public class ServerBuilder
+public class WebServer
 {
     /// <summary>
-    /// Creates a ServerBuilder
+    /// Creates a WebServer builder
     /// </summary>
     /// <returns></returns>
-    public static ServerBuilder New() => new();
+    public static WebServer New() => new();
 
-    public ServerBuilder Http(int port = 80)
+    /// <summary>
+    /// Enabling (insecure) HTTP support and configuring port
+    /// </summary>
+    /// <param name="port"></param>
+    /// <returns></returns>
+    public WebServer Http(int port = 80)
         => this.SideEffect(_ => HttpPort = port.SideEffect(p => WriteLine($"Using HTTP port {p}")));
 
-    public ServerBuilder Https(int port = 443)
+    /// <summary>
+    /// Enabling secure HTTPS support and configuring port
+    /// </summary>
+    /// <param name="port"></param>
+    /// <returns></returns>
+    public WebServer Https(int port = 443)
         => this.SideEffect(_ => HttpsPort = port.SideEffect(p => WriteLine($"Using HTTPS port {p}")));
 
     /// <summary>
@@ -28,39 +38,39 @@ public class ServerBuilder
     /// </summary>
     /// <param name="certificate"></param>
     /// <returns></returns>
-    public ServerBuilder HttpsCertificate(X509Certificate2 certificate)
+    public WebServer HttpsCertificate(X509Certificate2 certificate)
         => this.SideEffect(_ => Certificate = certificate);
 
     /// <summary>
     /// Automatically uses Let's Encrypt certificate. The .NET tool "LetsEncryptCert" is necessary and works with ths Web Server.
     /// </summary>
     /// <returns></returns>
-    public ServerBuilder UseLetsEncrypt()
+    public WebServer UseLetsEncrypt()
         => this.SideEffect(_ => LetsEncrypt = true);
 
     /// <summary>
-    /// Host website, the files are included as .NET resource. The files are included in the executing Assembly
+    /// Host website, the files are included as .NET resource in the executing Assembly
     /// </summary>
     /// <returns></returns>
-    public ServerBuilder WebsiteFromResource()
+    public WebServer WebsiteFromResource()
         => this.SideEffect(_ => IsWebsiteFromResource = true);
 
-    public ServerBuilder Route(Route route)
+    public WebServer Route(Route route)
         => this.SideEffect(_ => Routes.Add(route));
 
-    public ServerBuilder WebSocket(Action<IWebSocket> onWebSocket)
+    public WebServer WebSocket(Action<IWebSocket> onWebSocket)
         => this.SideEffect(_ => this.onWebSocket = onWebSocket);
 
-    public ServerBuilder KeepAliveTime(TimeSpan keepAliveTime)
+    public WebServer KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
 
-    public ServerBuilder AddAllowedOrigin(string origin)
+    public WebServer AddAllowedOrigin(string origin)
         => this.SideEffect(_ => allowedOrigins.Add(origin));
 
-    public ServerBuilder AccessControlMaxAge(TimeSpan maxAge)
+    public WebServer AccessControlMaxAge(TimeSpan maxAge)
         => this.SideEffect(_ => AccessControlMaxAgeStr = $"{(int)maxAge.TotalSeconds}");
 
-    public ServerBuilder UseRange()
+    public WebServer UseRange()
         => this.SideEffect(_ => UseRangeValue = true);
 
     /// <summary>
@@ -83,7 +93,7 @@ public class ServerBuilder
     internal X509Certificate2? Certificate { get; private set; }
     internal bool AllowRenegotiation { get; private set; }
     
-    ServerBuilder() { }
+    WebServer() { }
 
     readonly List<string> allowedOrigins = [];
 } 

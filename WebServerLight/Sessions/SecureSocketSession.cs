@@ -13,7 +13,7 @@ static class SecureSocketSession
 {
     static Resetter Resetter { get; } = new Resetter();
 
-    public static async Task<Stream?> GetTlsNetworkStreamAsync(this TcpClient tcpClient, int id, ServerBuilder configuration)
+    public static async Task<Stream?> GetTlsNetworkStreamAsync(this TcpClient tcpClient, int id, WebServer configuration)
     {
         var stream = tcpClient.GetStream();
         var sslStream = new SslStream(stream);
