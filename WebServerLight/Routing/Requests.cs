@@ -20,7 +20,7 @@ static class Requests
         var res = Resources.Get(url);
         if (res != null)
         {
-            await msg.SendStream(res, url?.GetFileExtension()?.ToMimeType() ?? MimeTypes.TextHtml, (int)res.Length, msg.KeepAliveCancellation);
+            await msg.SendStreamAsync(res, url?.GetFileExtension()?.ToMimeType() ?? MimeTypes.TextHtml, (int)res.Length, msg.KeepAliveCancellation);
             return RouteResult.Keepalive;
         }
         else

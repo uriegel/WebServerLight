@@ -13,11 +13,11 @@ public interface IRequest
 
     void AddResponseHeader(string key, string value);
     Task SendAsync(Stream payload, long contentLength, string contentType);
-    Task SendText(string body);
+    Task SendTextAsync(string body);
 
     Task<T?> DeserializeAsync<T>();
 
     Task SendJsonAsync<T>(T t);
 
-    Task Send404();
+    Task Send404Async();
 }

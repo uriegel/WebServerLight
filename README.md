@@ -195,13 +195,60 @@ Like you have seen in the previous section, a request is being served with the c
 public Route Request(Func<IRequest, Task<bool>> request);
 ```
 
-You include a request function as parameter which is called when all routing conditions are OK for the specific HTTP request. The routing function has a parameter of type ```IRequest``` and retuns asyncronously a boolean result. If it is true, te request is being served. If it is false, the next route is being probed.
+You include a request function as parameter which is called when all routing conditions are OK for the specific HTTP request. The routing function has a parameter of type ```IRequest``` and retuns asyncronously a boolean result. If it is true, the request is being served. If it is false, the next route is being probed.
 
+### Returning a string response
 
+Use the method ```IRequest.SendTextAsync``` to send a string response.
 
-// TODO examples of string, stream, json request functions
+### Returning a stream response
 
+Use the method ```IRequest.SendAsync``` to send a stream response like in the request method ```GetImage```:
 
+```cs
+async Task<bool> GetImage(IRequest request)
+{
+    var res = Resources.Get("image");
+    if (res != null)
+    {
+        await request.SendAsync(res, res.Length, MimeTypes.ImageJpeg);
+        return true;
+    }
+    else
+        return false;
+}
+```
+
+### Serving a JSON request
+
+Here is an example for responding to a JSON POST request:
+
+```cs
+var server =
+    WebServer
+        .New()
+        .Http()
+        .Route(MethodRoute
+                .New(Method.Post)
+                .Add(PathRoute
+                        .New("/json/cmd")
+                        .Request(JsonPost)));
+```
+with the method ```JsonPost```:
+
+```cs
+async Task<bool> JsonPost(IRequest request)
+{
+    var data = await request.DeserializeAsync<Data>();
+    var response = new Response([
+        new Contact("Charlie Parker", 34),
+        new Contact("Miles Davis", 90),
+        new Contact("John Coltrane", 99)], 123, request.Url);
+
+    await request.SendJsonAsync(response);
+    return true;
+}
+```
 
 ## WebSockets <a name="websockets"></a>
 ...

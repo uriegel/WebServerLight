@@ -101,7 +101,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         return null;
     }
 
-    public async Task SendStream(Stream stream, string contentType, long length, CancellationToken keepAliveCancellation)
+    public async Task SendStreamAsync(Stream stream, string contentType, long length, CancellationToken keepAliveCancellation)
     {
         if (UseRange && stream.CanSeek && RequestHeaders.GetValue("range") != null)
             await SendRange(stream, contentType, length, keepAliveCancellation);
@@ -116,7 +116,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         }
     }
 
-    public async Task SendText(string body)
+    public async Task SendTextAsync(string body)
     {
         AddResponseHeader("Content-Length", $"{body.Length}");
         AddResponseHeader("Content-Type", MimeTypes.TextPlain);
@@ -124,9 +124,9 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     } 
 
     public async Task SendAsync(Stream payload, long contentLength, string contentType)
-        => await SendStream(payload, contentType, contentLength, KeepAliveCancellation);
+        => await SendStreamAsync(payload, contentType, contentLength, KeepAliveCancellation);
 
-    public async Task Send404() => await Requests.Send404(this);
+    public async Task Send404Async() => await Requests.Send404(this);
 
     public async Task<T?> DeserializeAsync<T>()
         => Payload != null
@@ -145,7 +145,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         var ms = new MemoryStream();
         await JsonSerializer.SerializeAsync(ms, t, Json.Defaults, KeepAliveCancellation);
         ms.Position = 0;
-        await SendStream(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
+        await SendStreamAsync(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
     }
 
     public void SetRequestPath(string path) => requestPath = path;

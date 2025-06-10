@@ -20,7 +20,7 @@ class LetsEncryptRoute() : Route([])
                 .ReadAllTextFromFilePath()
                 .GetOrDefault("");
 
-        await msg.SendText(text);
+        await msg.SendTextAsync(text);
         return RouteResult.Keepalive;
     }
 }
