@@ -148,8 +148,60 @@ var server =
 When the web site requests a range request, the media file will be streamed.
 
 ## Routing <a name="routing"></a>
-...
+
+WebServerLight has a routing concept. You can add new routes with the help of the function ```Route```:
+```cs
+var server =
+    WebServer
+        .Route()
+```
+Threre are several route-Objects you can include:
+* HttpRoute (only called when using http:// scheme)
+* HttpsRoute (only called when using https:// scheme)
+* MethodRoute (only called when the HTTP method is one of GET, PUT, POST, ...)
+* PathRoute (only called when the URL path part starts with the as parameter given path)
+* PathExactRoute (only called when the URL path part equals the as parameter given path)
+
+These routes are included with the help of the ```New()``` static function like this:
+
+```cs
+var server =
+    WebServer
+        .Route(MethodRoute
+            .New(Method.Get))
+```
+Here you add a new route that is only called when the HTTP method is GET.
+
+The routes can be combined like this:
+
+```cs
+var server =
+    WebServer
+        .Route(MethodRoute
+            .New(Method.Get))
+                .Add(PathRoute
+                        .New("/image")
+                        .Request(GetImage))
+                .Add(PathRoute
+                        .New("/video")
+                        .Request(GetVideo)))
+```
+When the method is GET and when the path starts with ```/image```, then the request ```GetImage``` is being called. Otherwise when the method is GET and when the path starts with ```/video```, then the request ```GetImage``` is being called.
+
 ## Serving requests <a name="servingrequests"></a>
-...
+Like you have seen in the previous section, a request is being served with the call to ```Request```. ```Request``` has the following signature:
+
+```cs
+public Route Request(Func<IRequest, Task<bool>> request);
+```
+
+You include a request function as parameter which is called when all routing conditions are OK for the specific HTTP request. The routing function has a parameter of type ```IRequest``` and retuns asyncronously a boolean result. If it is true, te request is being served. If it is false, the next route is being probed.
+
+
+
+// TODO examples of string, stream, json request functions
+
+
+
 ## WebSockets <a name="websockets"></a>
 ...
