@@ -240,7 +240,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         if (!ResponseHeaders.ContainsKey("Content-Length") && payload)
             AddResponseHeader("Connection", "close");
         AddResponseHeader("Date", DateTime.Now.ToUniversalTime().ToString("R"));
-        AddResponseHeader("Server", "URiegel WebServerLight");
+        AddResponseHeader("Server", server.Configuration.ServerName);
 
         // if (server.Configuration.XFrameOptions != XFrameOptions.NotSet)
         //     headers["X-Frame-Options"] = server.Configuration.XFrameOptions.ToString();

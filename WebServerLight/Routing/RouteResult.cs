@@ -1,4 +1,4 @@
-namespace WebServerLightSessions;
+namespace WebServerLight.Routing;
 
 public enum RouteResult
 {

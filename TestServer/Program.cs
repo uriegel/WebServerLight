@@ -39,9 +39,7 @@ var server =
                         .Request(GetMediaFile)
                         .Request(GetMedia))))
 
-        // TODO ServerName
         // TODO HostPath (illmatic)
-        // TODO JsonPost
         .WebSocket(WebSocket)
         .AddAllowedOrigin("http://localhost:8080")
         .AccessControlMaxAge(TimeSpan.FromMinutes(1))

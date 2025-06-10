@@ -1,5 +1,3 @@
-using WebServerLightSessions;
-
 namespace WebServerLight.Routing;
 
 public class MethodRoute(Method method, List<Route> routes) : Route(routes)

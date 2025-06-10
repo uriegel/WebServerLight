@@ -49,11 +49,19 @@ public class WebServer
         => this.SideEffect(_ => LetsEncrypt = true);
 
     /// <summary>
-    /// Host website, the files are included as .NET resource in the executing Assembly
+    /// WebServerLight can host a complete web site and other resources from files which are included as .NET resources. You have to include the files in your .csproj project
     /// </summary>
     /// <returns></returns>
     public WebServer WebsiteFromResource()
         => this.SideEffect(_ => IsWebsiteFromResource = true);
+
+    /// <summary>
+    /// HTTP Response Header Revealing Web Server. You can change the HTTP Response Header "Server:"
+    /// </summary>
+    /// <param name="server"></param>
+    /// <returns></returns>
+    public WebServer Server(string server)
+        => this.SideEffect(_ => ServerName = server);
 
     public WebServer Route(Route route)
         => this.SideEffect(_ => Routes.Add(route));
@@ -61,15 +69,34 @@ public class WebServer
     public WebServer WebSocket(Action<IWebSocket> onWebSocket)
         => this.SideEffect(_ => this.onWebSocket = onWebSocket);
 
+    /// <summary>
+    /// You can specify the time a socket is alive waiting for requests. Default is 3 minutes
+    /// </summary>
+    /// <param name="keepAliveTime"></param>
+    /// <returns></returns>
     public WebServer KeepAliveTime(TimeSpan keepAliveTime)
         => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
 
+    /// <summary>
+    /// Necessary for CORS requests. You can specify an allowed origin. This method can be called multiple times for multiple origins
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <returns></returns>
     public WebServer AddAllowedOrigin(string origin)
         => this.SideEffect(_ => allowedOrigins.Add(origin));
 
+    /// <summary>
+    /// The HTTP Access-Control-Max-Age response header indicates how long the results of a preflight request can be cached.
+    /// </summary>
+    /// <param name="maxAge"></param>
+    /// <returns></returns>
     public WebServer AccessControlMaxAge(TimeSpan maxAge)
         => this.SideEffect(_ => AccessControlMaxAgeStr = $"{(int)maxAge.TotalSeconds}");
 
+    /// <summary>
+    /// Activates range requests
+    /// </summary>
+    /// <returns></returns>
     public WebServer UseRange()
         => this.SideEffect(_ => UseRangeValue = true);
 
@@ -92,6 +119,8 @@ public class WebServer
     internal bool LetsEncrypt { get; private set; }
     internal X509Certificate2? Certificate { get; private set; }
     internal bool AllowRenegotiation { get; private set; }
+
+    internal string ServerName { get; private set; } = "URiegel WebServerLight";
     
     WebServer() { }
 

@@ -2,13 +2,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using CsTools.Extensions;
-using WebServerLight;
 using WebServerLight.Routing;
-using WebServerLight.Sessions;
-
 using static System.Console;
 
-namespace WebServerLightSessions;
+namespace WebServerLight.Sessions;
 
 class RequestSession(Server server, SocketSession socketSession, Stream networkStream, DateTime? startTime, bool isSecured)
 {

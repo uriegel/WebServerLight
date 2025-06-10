@@ -1,5 +1,3 @@
-using WebServerLightSessions;
-
 namespace WebServerLight.Routing;
 
 class RequestRoute(Func<Message, ValueTask<RouteResult>> request) : Route([])
