@@ -18,7 +18,7 @@ In a C# Console program, you have to add this package to your project:
 
 ```cs
 <ItemGroup>
-    <PackageReference Include="WebServerLight" Version="0.0.23-beta-23" />
+    <PackageReference Include="WebServerLight" Version="1.0.0" />
 </ItemGroup>
 ```
 Now you can set up your web server with the builder pattern:
