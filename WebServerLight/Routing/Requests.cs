@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using CsTools.Extensions;
 
 namespace WebServerLight.Routing;
@@ -38,6 +39,16 @@ static class Requests
                 return await request(msg)
                     ? RouteResult.Keepalive
                     : RouteResult.Next;
+            }
+            catch (IOException ioe) when (ioe.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset) 
+            {
+                Console.WriteLine($"ServerRequest: connection reset");
+                throw new ConnectionResetException();
+            }
+            catch (IOException ioe) when (ioe.InnerException is SocketException se) 
+            {
+                Console.WriteLine($"ServerRequest: connection reset");
+                throw new ConnectionClosedException();
             }
             catch (Exception e)
             {

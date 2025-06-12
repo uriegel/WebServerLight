@@ -43,6 +43,10 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
         {
             Error.WriteLine($"{Id}- An authentication error has occurred while reading socket, session: {tcpClient.Client.RemoteEndPoint as IPEndPoint}, error: {ae}");
         }
+        catch (ConnectionResetException)
+        {
+            Close();
+        }
         catch (Exception e) when (e is IOException || e is ConnectionClosedException || e is SocketException)
         {
             Error.WriteLine(() => $"{Id}- Closing socket session, reason: {e}");

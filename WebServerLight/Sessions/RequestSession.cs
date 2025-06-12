@@ -136,6 +136,11 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             Close(true);
             return false;
         }
+        catch (ConnectionResetException)
+        {
+            Close(true);
+            return false;
+        }
         catch (Exception e)
         {
             Error.WriteLine($"{Id} Socket session closed, an error has occurred while receiving: {e}");
