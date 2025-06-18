@@ -148,6 +148,14 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         await SendStreamAsync(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
     }
 
+    public async Task SendJsonAsync(object obj, Type objType)
+    {
+        var ms = new MemoryStream();
+        await JsonSerializer.SerializeAsync(ms, obj, objType, Json.Defaults, KeepAliveCancellation);
+        ms.Position = 0;
+        await SendStreamAsync(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
+    }
+
     public void SetRequestPath(string path) => requestPath = path;
 
     public async Task SendOnlyHeaders(int code = 204, string status = "204 No Content")

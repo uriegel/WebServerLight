@@ -18,6 +18,7 @@ public interface IRequest
     Task<T?> DeserializeAsync<T>();
 
     Task SendJsonAsync<T>(T t);
+    Task SendJsonAsync(object obj, Type objType);
 
     Task Send404Async();
 }

@@ -63,7 +63,7 @@ async Task<bool> GetMedia(IRequest request)
         [.. info.GetDirectories().Select(n => n.Name).OrderBy(n => n)],
         [.. info.GetFiles().Select(n => n.Name).OrderBy(n => n)]
     );
-    await request.SendJsonAsync(json);
+    await request.SendJsonAsync(json, json.GetType());
     return true;
 }
 
