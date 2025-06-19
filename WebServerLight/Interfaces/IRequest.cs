@@ -9,6 +9,7 @@ public interface IRequest
 
     string? SubPath { get; }
 
+    ImmutableDictionary<string, string> RequestHeaders { get; }
     ImmutableDictionary<string, string> QueryParts { get; }
 
     void AddResponseHeader(string key, string value);
