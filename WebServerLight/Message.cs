@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Collections.Immutable;
+using System.IO.Pipelines;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -142,18 +144,28 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     public async Task SendJsonAsync<T>(T t)
     {
-        var ms = new MemoryStream();
-        await JsonSerializer.SerializeAsync(ms, t, Json.Defaults, KeepAliveCancellation);
-        ms.Position = 0;
-        await SendStreamAsync(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
+        AddResponseHeader("Content-Type", MimeTypes.ApplicationJson);
+        AddResponseHeader("Transfer-Encoding", "chunked");
+        InitResponseHeaders(true);
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"), keepAliveCancellation);
+
+        var pipe = new Pipe();
+        var writing = WriteJsonToPipeAsync(pipe.Writer, t);
+        var reading = ReadChunksFromPipeAndSendAsync(pipe.Reader, networkStream);
+        await Task.WhenAll(writing, reading);
     }
 
     public async Task SendJsonAsync(object obj, Type objType)
     {
-        var ms = new MemoryStream();
-        await JsonSerializer.SerializeAsync(ms, obj, objType, Json.Defaults, KeepAliveCancellation);
-        ms.Position = 0;
-        await SendStreamAsync(ms, MimeTypes.ApplicationJson, ms.Length, KeepAliveCancellation);
+        AddResponseHeader("Content-Type", MimeTypes.ApplicationJson);
+        AddResponseHeader("Transfer-Encoding", "chunked");
+        InitResponseHeaders(true);
+        await networkStream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{string.Join("\r\n", ResponseHeaders.Select(n => $"{n.Key}: {n.Value}"))}\r\n\r\n"), keepAliveCancellation);
+
+        var pipe = new Pipe();
+        var writing = WriteJsonToPipeAsync(pipe.Writer, obj, objType);
+        var reading = ReadChunksFromPipeAndSendAsync(pipe.Reader, networkStream);
+        await Task.WhenAll(writing, reading);
     }
 
     public void SetRequestPath(string path) => requestPath = path;
@@ -245,7 +257,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     void InitResponseHeaders(bool payload)
     {
-        if (!ResponseHeaders.ContainsKey("Content-Length") && payload)
+        if (!ResponseHeaders.ContainsKey("Transfer-Encoding") && !ResponseHeaders.ContainsKey("Content-Length") && payload)
             AddResponseHeader("Connection", "close");
         AddResponseHeader("Date", DateTime.Now.ToUniversalTime().ToString("R"));
         AddResponseHeader("Server", server.Configuration.ServerName);
@@ -268,6 +280,51 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
                         AddResponseHeader("Access-Control-Allow-Origin", originToAllow);
                 }
             }
+        }
+    }
+
+    async Task WriteJsonToPipeAsync<T>(PipeWriter writer, T t)
+    {
+        await JsonSerializer.SerializeAsync(writer.AsStream(), t, Json.Defaults, KeepAliveCancellation);
+        await writer.CompleteAsync();
+    }
+
+    async Task WriteJsonToPipeAsync(PipeWriter writer, object obj, Type type)
+    {
+        await JsonSerializer.SerializeAsync(writer.AsStream(), obj, type, Json.Defaults, KeepAliveCancellation);
+        await writer.CompleteAsync();
+    }
+
+    static async Task ReadChunksFromPipeAndSendAsync(PipeReader reader, Stream stream)
+    {
+        while (true)
+        {
+            ReadResult result = await reader.ReadAsync();
+            ReadOnlySequence<byte> buffer = result.Buffer;
+
+            foreach (var segment in buffer)
+            {
+                await WriteChunkAsync(stream, segment);
+            }
+
+            reader.AdvanceTo(buffer.End);
+
+            if (result.IsCompleted)
+                break;
+        }
+
+        await reader.CompleteAsync();
+
+        // Final chunk
+        var end = Encoding.ASCII.GetBytes("0\r\n\r\n");
+        await stream.WriteAsync(end);
+
+        static async Task WriteChunkAsync(Stream stream, ReadOnlyMemory<byte> data)
+        {
+            var sizeLine = Encoding.ASCII.GetBytes($"{data.Length:X}\r\n");
+            await stream.WriteAsync(sizeLine);
+            await stream.WriteAsync(data);
+            await stream.WriteAsync(Encoding.ASCII.GetBytes("\r\n"));
         }
     }
 
