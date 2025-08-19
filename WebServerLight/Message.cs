@@ -36,7 +36,7 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
         get
         {
             if (_SubPath == null && requestPath != null)
-                _SubPath = Url[requestPath.Length..].Trim('/');
+                _SubPath = Url[requestPath.Length..].Trim1('/');
             return _SubPath;
         }
     }
@@ -144,6 +144,8 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
 
     public async Task SendJsonAsync<T>(T t)
     {
+        //AddResponseHeader("Set-Cookie", "sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure; HttpOnly");
+        //AddResponseHeader("Set-Cookie", "sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT");
         AddResponseHeader("Content-Type", MimeTypes.ApplicationJson);
         AddResponseHeader("Transfer-Encoding", "chunked");
         InitResponseHeaders(true);
@@ -352,3 +354,11 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     const string webSocketKeyConcat = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 }
 
+static class StringExtensions
+{
+    public static string Trim1(this string txt, char trimSymbol)
+        => (txt.StartsWith(trimSymbol)
+            ? txt[1..]
+            : txt)
+                .TrimEnd(trimSymbol);
+}
