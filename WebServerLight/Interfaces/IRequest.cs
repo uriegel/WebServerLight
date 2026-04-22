@@ -14,6 +14,7 @@ public interface IRequest
 
     void AddResponseHeader(string key, string value);
     Task SendAsync(Stream payload, long contentLength, string contentType);
+    Task SendAsync(byte[] payload, string contentType);
     Task SendTextAsync(string body);
 
     Task<T?> DeserializeAsync<T>();

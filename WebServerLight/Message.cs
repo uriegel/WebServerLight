@@ -128,6 +128,12 @@ class Message(Server server, Method method, string url, ImmutableDictionary<stri
     public async Task SendAsync(Stream payload, long contentLength, string contentType)
         => await SendStreamAsync(payload, contentType, contentLength, KeepAliveCancellation);
 
+    public async Task SendAsync(byte[] payload, string contentType)
+    {
+        var memStm = new MemoryStream(payload, 0, payload.Length, false, true);        
+        await SendStreamAsync(memStm, contentType, payload.Length, KeepAliveCancellation);
+    }
+
     public async Task Send404Async() => await Requests.Send404(this);
 
     public async Task<T?> DeserializeAsync<T>()
