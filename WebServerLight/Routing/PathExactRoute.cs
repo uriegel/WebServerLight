@@ -6,8 +6,8 @@ public class PathExactRoute(string path, List<Route> routes) : Route(routes)
 
     internal PathExactRoute(string path) : this(path, []) { }
 
-    internal override async ValueTask<RouteResult> Probe(IRequest msg)
+    internal override async ValueTask<RouteResult> Probe(IRequest msg, Func<Exception, IRequest, Task>? onException)
         => msg is Message message && string.Compare(message.Url, path, StringComparison.CurrentCultureIgnoreCase) == 0
-                ? await ProbeRoutes(msg)
+                ? await ProbeRoutes(msg, onException)
                 : RouteResult.Next;
 }

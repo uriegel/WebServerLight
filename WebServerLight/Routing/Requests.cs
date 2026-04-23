@@ -50,11 +50,6 @@ static class Requests
                 Console.WriteLine($"ServerRequest: connection reset");
                 throw new ConnectionClosedException();
             }
-            catch (Exception e)
-            {
-                Console.WriteLine($"ServerRequest failed: {e}");
-                return RouteResult.Next;
-            }
         }
     }
     

@@ -4,7 +4,7 @@ namespace WebServerLight.Routing;
 
 class UpdateRoute() : Route([])
 {
-    internal async override ValueTask<RouteResult> Probe(IRequest msg)
+    internal async override ValueTask<RouteResult> Probe(IRequest msg, Func<Exception, IRequest, Task>? onException)
     {
         if (msg is Message message)
         {

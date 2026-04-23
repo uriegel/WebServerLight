@@ -5,7 +5,7 @@ namespace WebServerLight.Routing;
 
 class LetsEncryptRoute() : Route([])
 {
-    internal override async ValueTask<RouteResult> Probe(IRequest msg)
+    internal override async ValueTask<RouteResult> Probe(IRequest msg, Func<Exception, IRequest, Task>? onException)
         => msg is Message message && message.Url.StartsWith("/.well-known/acme-challenge")
             ? await Request(message)
             : RouteResult.Next;

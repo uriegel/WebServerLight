@@ -17,16 +17,19 @@ var server =
         .Route(MethodRoute
                 .New(Method.Get)
                 .Add(PathRoute
-                        .New("/image")
-                        .Request(GetImage))
-                .Add(PathRoute
                         .New("/video")
-                        .Request(GetVideo)))
+                        .Request(GetVideo))
+                .Add(PathRoute
+                        .New("/image")
+                        .Request(GetImage)))
         .Route(MethodRoute
-                .New(Method.Post)
+                .New(Method.Post, OnPostError)
                 .Add(PathRoute
                         .New("/json/cmd4")
                         .Request(JsonPost4))
+                .Add(PathRoute
+                        .New("/json/cmdE")
+                        .Request(JsonPostE))
                 .Add(PathRoute
                         .New("/json")
                         .Request(JsonPost)))
@@ -115,7 +118,17 @@ async Task<bool> JsonPost4(IRequest request)
         new Contact("John Coltrane", 99)], 123, "Response without input");
     await request.SendJsonAsync(response);
     return true;
-} 
+}
+
+async Task OnPostError(Exception e, IRequest request)
+{
+    await request.SendJsonAsync(new { Error = "An error has occurred, e"});
+}
+
+async Task<bool> JsonPostE(IRequest request)
+{
+    throw new ApplicationException("This is a test exception");
+}
 
 async Task<bool> JsonPost(IRequest request)
 {

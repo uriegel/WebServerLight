@@ -88,7 +88,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         {
             // TODO set range from Routing
             msg.UseRange = server.Configuration.UseRangeValue;
-            return await server.Routes.Probe(msg) switch
+            return await server.Routes.Probe(msg, null) switch
             {
                 RouteResult.Keepalive => true,
                 RouteResult.Detach => false,
@@ -143,6 +143,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         }
         catch (Exception e)
         {
+            // TODO Send 500 Server Error
             Error.WriteLine($"{Id} Socket session closed, an error has occurred while receiving: {e}");
             Close(true);
             return false;
