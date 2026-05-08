@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-  	<Version>2.0.1</Version>
-	  <FileVersion>2.0.1.0</FileVersion>
-	  <AssemblyVersion>2.0.1.0</AssemblyVersion>
+  	<Version>2.0.2</Version>
   	<Authors>Uwe Riegel</Authors>
 	  <Company>Uwe Riegel</Company>		
     <Description>A light weight web server for hosting a web site from file location or from .NET resource and serving requests</Description>
@@ -31,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsTools" Version="9.0.0-beta" />
+    <PackageReference Include="CsTools" Version="9.0.1" />
   </ItemGroup>
 
   <PropertyGroup>
