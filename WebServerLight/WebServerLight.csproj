@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <PackageReference Include="CsTools" Version="9.0.0-beta" />
-    <PackageReference Include="System.IO.Pipelines" Version="10.0.7" />
   </ItemGroup>
 
   <PropertyGroup>
