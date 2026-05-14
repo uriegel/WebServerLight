@@ -35,6 +35,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             else
             {
                 WriteLine($"{Id} Socket session closed");
+                closed = true;
                 return false;
             }
         }
@@ -67,7 +68,8 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
             var elapsed = stopwatch?.Elapsed;
             stopwatch?.Stop();
             // TODO WriteLine($"{Id} Answer: {RemoteEndPoint} \"{Headers.Method} {Headers.Url.CutAt('?')} {Headers.Http}\" Status: {responseHeaders.Status} Size: {responseHeaders.ContentLength} Duration: {elapsed}");
-            WriteLine($"{Id} Answer: {socketSession.TcpClient.Client.RemoteEndPoint as IPEndPoint} Duration: {elapsed}");
+            if (!closed)
+                WriteLine($"{Id} Answer: {socketSession.TcpClient.Client.RemoteEndPoint as IPEndPoint} Duration: {elapsed}");
         }
     }
 
@@ -154,6 +156,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
     static int seedId;
     readonly Stopwatch stopwatch = new();
     readonly CancellationToken keepAliveCancellation = new CancellationTokenSource(server.SocketLifetime).Token;
+    bool closed;
 }
 
 // TODO if Modified
