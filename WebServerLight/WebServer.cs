@@ -2,7 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using CsTools.Extensions;
 using WebServerLight.Routing;
 
-using static System.Console;
+using static WebServerLight.Logging;
 
 namespace WebServerLight;
 
@@ -23,7 +23,7 @@ public class WebServer
     /// <param name="port"></param>
     /// <returns></returns>
     public WebServer Http(int port = 80)
-        => this.SideEffect(_ => HttpPort = port.SideEffect(p => WriteLine($"Using HTTP port {p}")));
+        => this.SideEffect(_ => HttpPort = port.SideEffect(p => WriteLine($"Using HTTP port {p}", LogLevel.Info)));
 
     /// <summary>
     /// Enabling secure HTTPS support and configuring port
@@ -31,7 +31,7 @@ public class WebServer
     /// <param name="port"></param>
     /// <returns></returns>
     public WebServer Https(int port = 443)
-        => this.SideEffect(_ => HttpsPort = port.SideEffect(p => WriteLine($"Using HTTPS port {p}")));
+        => this.SideEffect(_ => HttpsPort = port.SideEffect(p => WriteLine($"Using HTTPS port {p}", LogLevel.Info)));
 
     /// <summary>
     /// Certificate necessary for HTTPS. Alternatively you could call UseLetsEncrypt() and let LetsEncrypt do all the work
@@ -47,6 +47,10 @@ public class WebServer
     /// <returns></returns>
     public WebServer UseLetsEncrypt()
         => this.SideEffect(_ => LetsEncrypt = true);
+
+    public WebServer Logging(LogLevel logLevel) 
+        => this.SideEffect(_ => WebServerLight.Logging.LogLevel = logLevel);
+
 
     /// <summary>
     /// WebServerLight can host a complete web site and other resources from files which are included as .NET resources. You have to include the files in your .csproj project
@@ -75,7 +79,7 @@ public class WebServer
     /// <param name="keepAliveTime"></param>
     /// <returns></returns>
     public WebServer KeepAliveTime(TimeSpan keepAliveTime)
-        => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s")));
+        => this.SideEffect(_ => SocketLifetime = ((int)keepAliveTime.TotalSeconds).SideEffect(t => WriteLine($"KeepAlive time: {t} s", LogLevel.Info)));
 
     /// <summary>
     /// Necessary for CORS requests. You can specify an allowed origin. This method can be called multiple times for multiple origins

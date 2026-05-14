@@ -3,7 +3,8 @@ using System.Net.Sockets;
 using CsTools;
 using WebServerLight.Routing;
 using WebServerLight.Sessions;
-using static System.Console;
+
+using static WebServerLight.Logging;
 
 namespace WebServerLight;
 
@@ -28,7 +29,7 @@ class Server(WebServer server) : IServer
     /// </summary>
     public void Start()
     {
-        WriteLine("Starting...");
+        WriteLine("Starting...", LogLevel.Info);
         ServicePointManager.DefaultConnectionLimit = 1000;
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
@@ -62,15 +63,15 @@ class Server(WebServer server) : IServer
 
         if (listener != null)
         {
-            WriteLine("Starting HTTP listener...");
+            WriteLine("Starting HTTP listener...", LogLevel.Info);
             listener.Start();
-            WriteLine("HTTP listener started");
+            WriteLine("HTTP listener started", LogLevel.Info);
         }
         if (tlsListener != null)
         {
-            WriteLine("Starting HTTPS listener...");
+            WriteLine("Starting HTTPS listener...", LogLevel.Info);
             tlsListener.Start();
-            WriteLine("HTTPS listener started");
+            WriteLine("HTTPS listener started", LogLevel.Info);
         }
         IsStarted = true;
         if (listener != null)
@@ -78,7 +79,7 @@ class Server(WebServer server) : IServer
         if (tlsListener != null)
             StartConnecting(tlsListener, true);
 
-        WriteLine("Started");
+        WriteLine("Started", LogLevel.Info);
     }
 
     /// <summary>
@@ -86,21 +87,21 @@ class Server(WebServer server) : IServer
     /// </summary>
     public void Stop()
     {
-        WriteLine("Stopping...");
+        WriteLine("Stopping...", LogLevel.Info);
         if (listener != null)
         {
-            WriteLine("Stopping HTTP listener...");
+            WriteLine("Stopping HTTP listener...", LogLevel.Info);
             listener.Stop();
-            WriteLine("HTTP listener stopped");
+            WriteLine("HTTP listener stopped", LogLevel.Info);
         }
 
         if (tlsListener != null)
         {
-            WriteLine("Stopping HTTPS listener...");
+            WriteLine("Stopping HTTPS listener...", LogLevel.Info);
             tlsListener.Stop();
-            WriteLine("HTTPS listener stopped");
+            WriteLine("HTTPS listener stopped", LogLevel.Info);
         }
-        WriteLine("Stopped");
+        WriteLine("Stopped", LogLevel.Info);
     }
 
     void StartConnecting(TcpListener listener, bool isSecured)
@@ -123,7 +124,7 @@ class Server(WebServer server) : IServer
             }
             catch (Exception e)
             {
-                WriteLine($"Error occurred in connecting thread: {e}");
+                WriteLine($"Error occurred in connecting thread: {e}", LogLevel.Error);
             }
         })
         {
@@ -151,7 +152,7 @@ class Server(WebServer server) : IServer
         {
             if (!IsStarted)
                 return;
-            WriteLine($"Error in OnConnected occurred: {e}");
+            WriteLine($"Error in OnConnected occurred: {e}", LogLevel.Error);
         }
     }
 

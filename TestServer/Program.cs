@@ -10,6 +10,7 @@ WriteLine(@"Test site:  http://localhost:8080");
 var server =
     WebServer
         .New()
+        .Logging(LogLevel.Trace)
         .Http(8080)
         .Https(4433)
         .WebsiteFromResource()

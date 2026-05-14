@@ -4,8 +4,8 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using CsTools.Extensions;
 
-using static System.Console;
 using static CsTools.Functional.Memoization;
+using static WebServerLight.Logging;
 
 namespace WebServerLight.Sessions;
 
@@ -60,7 +60,7 @@ static class SecureSocketSession
                 .AppendPath("letsencrypt-uweb")
                 ?.ReadAllTextFromFilePath()
                 ?.Trim()
-                ?? "".SideEffect(_ => WriteLine("!!!NO PASSWORD!!"));
+                ?? "".SideEffect(_ => WriteLine("!!!NO PASSWORD!!", LogLevel.Error));
 
     static void StartCertificateTimer()
         => certificateResetter ??= new(_ => Resetter.Reset(),

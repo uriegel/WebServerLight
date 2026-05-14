@@ -2,8 +2,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using CsTools.Extensions;
+
 using WebServerLight.Routing;
-using static System.Console;
+using static WebServerLight.Logging;
 
 namespace WebServerLight.Sessions;
 
@@ -39,7 +40,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         }
         catch (OperationCanceledException)
         {
-            Error.WriteLine($"{Id} Closing socket session, lifetime exceeded");
+            WriteLine($"{Id} Closing socket session, lifetime exceeded", LogLevel.Error);
             Close(true);
             return false;
         }
@@ -57,7 +58,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         }
         catch (Exception e)
         {
-            Error.WriteLine($"{Id} An error has occurred while reading socket: {e}");
+            WriteLine($"{Id} An error has occurred while reading socket: {e}", LogLevel.Error);
             Close(true);
             return false;
         }
@@ -100,7 +101,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         {
             if (se.SocketErrorCode == SocketError.TimedOut)
             {
-                Error.WriteLine($"{Id} Socket session closed, Timeout has occurred");
+                WriteLine($"{Id} Socket session closed, Timeout has occurred", LogLevel.Error);
                 Close(true);
                 return false;
             }
@@ -108,31 +109,31 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         }
         catch (ConnectionClosedException)
         {
-            Error.WriteLine($"{Id} Socket session closed via exception");
+            WriteLine($"{Id} Socket session closed via exception", LogLevel.Error);
             Close(true);
             return false;
         }
         catch (ObjectDisposedException oe)
         {
-            Error.WriteLine($"{Id} Socket session closed, an error has occurred: {oe}");
+            WriteLine($"{Id} Socket session closed, an error has occurred: {oe}", LogLevel.Error);
             Close(true);
             return false;
         }
         catch (IOException ioe) when (ioe.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset)
         {
-            Error.WriteLine($"{Id} Socket session reset by peer");
+            WriteLine($"{Id} Socket session reset by peer", LogLevel.Error);
             Close();
             return false;
         }
         catch (IOException ioe) when (ioe.InnerException is SocketException se && se.SocketErrorCode == SocketError.Shutdown)
         {
-            Error.WriteLine($"{Id} Socket session shutdown by peer");
+            WriteLine($"{Id} Socket session shutdown by peer", LogLevel.Error);
             Close(true);
             return false;
         }
         catch (IOException ioe)
         {
-            Error.WriteLine($"{Id} Socket session closed: {ioe}");
+            WriteLine($"{Id} Socket session closed: {ioe}", LogLevel.Error);
             Close(true);
             return false;
         }
@@ -144,7 +145,7 @@ class RequestSession(Server server, SocketSession socketSession, Stream networkS
         catch (Exception e)
         {
             // TODO Send 500 Server Error
-            Error.WriteLine($"{Id} Socket session closed, an error has occurred while receiving: {e}");
+            WriteLine($"{Id} Socket session closed, an error has occurred while receiving: {e}", LogLevel.Error);
             Close(true);
             return false;
         }

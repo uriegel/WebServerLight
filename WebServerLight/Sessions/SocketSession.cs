@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Authentication;
 
-using static System.Console;
+using static WebServerLight.Logging;
 
 namespace WebServerLight.Sessions;
 
@@ -41,7 +41,8 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
         }
         catch (AuthenticationException ae)
         {
-            Error.WriteLine($"{Id}- An authentication error has occurred while reading socket, session: {tcpClient.Client.RemoteEndPoint as IPEndPoint}, error: {ae}");
+            WriteLine($"{Id}- An authentication error has occurred while reading socket, session: {tcpClient.Client.RemoteEndPoint as IPEndPoint}, error: {ae}",
+                LogLevel.Error);
         }
         catch (ConnectionResetException)
         {
@@ -49,18 +50,18 @@ class SocketSession(Server server, TcpClient tcpClient, bool isSecured)
         }
         catch (Exception e) when (e is IOException || e is ConnectionClosedException || e is SocketException)
         {
-            Error.WriteLine(() => $"{Id}- Closing socket session, reason: {e}");
+            WriteLine($"{Id}- Closing socket session, reason: {e}", LogLevel.Error);
             Close();
         }
         catch (Exception e) when (e is ObjectDisposedException)
         {
-            Error.WriteLine($"{Id} Object disposed");
-            Close();
+            WriteLine($"{Id} Object disposed", LogLevel.Error);
+             Close();
         }
         catch (Exception e)
         {
-            Error.WriteLine($"{Id} An error has occurred while reading socket, error: {e}");
-        }
+            WriteLine($"{Id} An error has occurred while reading socket, error: {e}", LogLevel.Error);
+         }
     }
 
     public void Close() => TcpClient.Close();
